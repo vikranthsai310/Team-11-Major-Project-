@@ -37,6 +37,7 @@ Team 11 · Batch 11 · CSE (Data Science) · Vignana Bharathi Institute of Techn
 | 14 | [Glossary](14-GLOSSARY.md) | Cardano, project and ML terminology |
 | 15 | [References](15-REFERENCES.md) | Bibliography with the role each source plays |
 | 16 | [Report Outline](16-REPORT-OUTLINE.md) | Chapter plan mapped onto these documents |
+| 17 | [UI Spec](17-UI-SPEC.md) | Dashboard wireframes and states; figure specs F1–F8 |
 
 ## Architecture Decision Records
 
@@ -68,7 +69,7 @@ Where this documentation conflicts with the earlier artifacts in `Doc/` (abstrac
 
 | Area | State |
 |---|---|
-| Specification | Complete — documents 01–16 |
+| Specification | Complete — documents 01–17 |
 | Decision records | Complete — ADR 001–007 |
 | Implementation | Not started; begin at `12-ROADMAP.md` Phase 0 |
 | Report chapters 1–5 | Assemblable from these documents today |
