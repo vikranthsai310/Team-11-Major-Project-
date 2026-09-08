@@ -1,0 +1,132 @@
+<mxfile host="app.diagrams.net" type="device">
+  <diagram name="System Architecture" id="arch-1">
+    <mxGraphModel dx="1400" dy="820" grid="0" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1300" pageHeight="620" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="AI-Driven Adaptive Transaction Batching for Cardano DEXs &#8212; System Architecture" style="text;html=1;fontSize=17;fontStyle=1;fontColor=#1F3864;align=center;" vertex="1" parent="1">
+          <mxGeometry x="0" y="4" width="1160" height="26" as="geometry" />
+        </mxCell>
+
+        <!-- ============ containers ============ -->
+        <mxCell id="c1" value="ON-CHAIN &#183; CARDANO PREPROD TESTNET" style="rounded=0;html=1;fillColor=none;strokeColor=#B3B3B3;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=2;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="40" width="1160" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="CHAIN DATA SOURCES" style="rounded=0;html=1;fillColor=none;strokeColor=#B3B3B3;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=2;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="150" width="1160" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="c3" value="OFF-CHAIN ADAPTIVE BATCHER &#183; PROPOSED SYSTEM" style="rounded=0;html=1;fillColor=none;strokeColor=#D79B00;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=2;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="262" width="1160" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="c4" value="OFFLINE TRAINING &amp;amp; EVALUATION" style="rounded=0;html=1;fillColor=none;strokeColor=#B3B3B3;dashed=1;verticalAlign=top;align=left;spacingLeft=8;spacingTop=2;fontSize=10;fontColor=#666666;" vertex="1" parent="1">
+          <mxGeometry x="0" y="422" width="1160" height="86" as="geometry" />
+        </mxCell>
+
+        <!-- ============ layer 1 : on-chain (blue) ============ -->
+        <mxCell id="wallet" value="&lt;b&gt;User Wallet&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;signs order &#183; CIP-30&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="13" y="64" width="253" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="orders" value="&lt;b&gt;Order UTXOs&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;Aiken order validator&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="306" y="64" width="253" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="pool" value="&lt;b&gt;Liquidity Pool UTXO&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;one spend per block&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="599" y="64" width="253" height="58" as="geometry" />
+        </mxCell>
+        <mxCell id="block" value="&lt;b&gt;Block Producer&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;90,112 B &#183; ExUnit caps&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="892" y="64" width="253" height="58" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="wallet" target="orders"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="orders" target="pool"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="pool" target="block"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ============ layer 2 : data sources (green) ============ -->
+        <mxCell id="koios" value="&lt;b&gt;Koios API&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="13" y="172" width="253" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="bf" value="&lt;b&gt;Blockfrost&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="306" y="172" width="253" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="dbsync" value="&lt;b&gt;cardano-db-sync&lt;/b&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="599" y="172" width="253" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="store" value="&lt;b&gt;Block Feature Store&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;dataset D1&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="892" y="172" width="253" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="koios" target="bf"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="bf" target="dbsync"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="dbsync" target="store"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- block producer -> feature store -->
+        <mxCell id="e7" value="block data" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;fontSize=9;fontColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="block" target="store"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ============ layer 3 : adaptive batcher (orange) ============ -->
+        <mxCell id="m1" value="&lt;b&gt;M1&#160; Chain Data Collector&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;fill % &#183; ExUnits&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="13" y="286" width="200" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="m2" value="&lt;b&gt;M2&#160; Congestion Forecaster&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;P1 &#183; LightGBM / LSTM&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="246" y="286" width="200" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="m3" value="&lt;b&gt;M3&#160; Order Queue Manager&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;depth &#183; waiting time&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="479" y="286" width="200" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="m4" value="&lt;b&gt;M4&#160; Adaptive Batching Policy&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;P2 optimizer &#183; P3 RL&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;strokeWidth=2;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="712" y="286" width="200" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="m5" value="&lt;b&gt;M5&#160; Batch Builder &amp;amp; Submitter&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;size / ExUnit check&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="945" y="286" width="200" height="78" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="m1" target="m2"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="m2" target="m3"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="m3" target="m4"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="m4" target="m5"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- feature store -> M1 -->
+        <mxCell id="e12" value="D1 features" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;fontSize=9;fontColor=#666666;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="store" target="m1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1018" y="250" /><mxPoint x="113" y="250" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- M5 -> block producer : closes the loop on the right -->
+        <mxCell id="e13" value="batch tx" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;fontSize=9;fontColor=#666666;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="m5" target="block">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="1215" y="325" /><mxPoint x="1215" y="93" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- M5 -> M4 feedback -->
+        <mxCell id="e14" value="inclusion result &#8594; reward" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#B85450;dashed=1;endArrow=block;endFill=1;fontSize=9;fontColor=#B85450;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="m5" target="m4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="995" y="380" /><mxPoint x="862" y="380" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+        <!-- ============ layer 4 : offline (purple) ============ -->
+        <mxCell id="sim" value="&lt;b&gt;M6&#160; Discrete-Event Simulator&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;replays real historical blocks&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="13" y="444" width="351" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="base" value="&lt;b&gt;Static Baselines&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;E1 fixed-size &#183; E2 interval &#183; E3 greedy&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="404" y="444" width="351" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="metrics" value="&lt;b&gt;Metrics &amp;amp; Plots&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:9px;color:#666666&quot;&gt;latency &#183; cost &#183; inclusion &#183; fairness&lt;/font&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="795" y="444" width="351" height="56" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="sim" target="base"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;" edge="1" parent="1" source="base" target="metrics"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- simulator -> policy : training -->
+        <mxCell id="e17" value="training episodes" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;strokeColor=#4D4D4D;endArrow=block;endFill=1;fontSize=9;fontColor=#666666;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="sim" target="m4">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points"><mxPoint x="188" y="407" /><mxPoint x="762" y="407" /></Array>
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
