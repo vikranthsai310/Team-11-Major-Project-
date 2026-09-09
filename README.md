@@ -60,7 +60,7 @@ src/     implementation (not started)
 
 ## Status
 
-Specification complete; implementation not started. Begin at [`docs/12-ROADMAP.md`](docs/12-ROADMAP.md), Phase 0.
+Specification complete; implementation not started. Begin at [`docs/18-TODO.md`](docs/18-TODO.md), Phase 0 — the task-level checklist derived from [`docs/12-ROADMAP.md`](docs/12-ROADMAP.md).
 
 The first real question the project must answer is **whether Cardano block congestion is predictable at a 20-second horizon** — Phase 1 answers it before anything is built on top of it.
 
@@ -75,3 +75,4 @@ Full index: [`docs/README.md`](docs/README.md)
 | [Constraints & Cost Model](docs/07-CONSTRAINTS-COST-MODEL.md) | The protocol limits everything derives from |
 | [ADRs](docs/README.md#architecture-decision-records) | Seven decisions, several overturning earlier assumptions |
 | [Roadmap](docs/12-ROADMAP.md) | Phases, exit gates, scope-cut order |
+| [Master TODO](docs/18-TODO.md) | Every task, with its done-when condition |

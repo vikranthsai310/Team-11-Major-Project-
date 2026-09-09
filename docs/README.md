@@ -9,7 +9,7 @@ Team 11 · Batch 11 · CSE (Data Science) · Vignana Bharathi Institute of Techn
 
 **New to the project** — `01-PRD` → `14-GLOSSARY` → `03-ARCHITECTURE` → `07-CONSTRAINTS-COST-MODEL`
 
-**About to write code** — `02-TECH-SPEC` → `04-MODULE-SPECS` → `05-DATA-SPEC` → `08-SIMULATOR-SPEC` → `12-ROADMAP` → `13-RUNBOOK`
+**About to write code** — `02-TECH-SPEC` → `04-MODULE-SPECS` → `05-DATA-SPEC` → `08-SIMULATOR-SPEC` → `12-ROADMAP` → `13-RUNBOOK`, then work through `18-TODO`
 
 **Preparing for a review or viva** — `adr/` (every decision and its justification) → `09-EVALUATION-PROTOCOL` → `11-RISK-REGISTER`
 
@@ -38,6 +38,7 @@ Team 11 · Batch 11 · CSE (Data Science) · Vignana Bharathi Institute of Techn
 | 15 | [References](15-REFERENCES.md) | Bibliography with the role each source plays |
 | 16 | [Report Outline](16-REPORT-OUTLINE.md) | Chapter plan mapped onto these documents |
 | 17 | [UI Spec](17-UI-SPEC.md) | Dashboard wireframes and states; figure specs F1–F8 |
+| 18 | [Master TODO](18-TODO.md) | Every task, phase by phase, with its done-when condition |
 
 ## Architecture Decision Records
 
@@ -71,6 +72,6 @@ Where this documentation conflicts with the earlier artifacts in `Doc/` (abstrac
 |---|---|
 | Specification | Complete — documents 01–17 |
 | Decision records | Complete — ADR 001–007 |
-| Implementation | Not started; begin at `12-ROADMAP.md` Phase 0 |
+| Implementation | Not started; begin at `18-TODO.md` Phase 0 |
 | Report chapters 1–5 | Assemblable from these documents today |
 | Report chapters 6–8 | Await implementation and results |
