@@ -2,7 +2,7 @@
 
 Execution checklist for the whole project. Every task traces to a specification document, states its deliverable as a file path, and states the condition under which it may be ticked.
 
-**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–4 complete — the project has a defensible result.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen, P2 evaluated against tuned baselines with zero Gate A violations. **224 tests green.** Phase 5 (RL agent) is next and is an upgrade, not a requirement.
+**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–4 complete — the project has a defensible result.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen, P2 evaluated against tuned baselines with zero Gate A violations. Phase 5's RL environment and training pipeline are built and validated; the 5-seed x 2M-step runs remain. **240 tests green.**
 
 **Phase 1 outcomes:** the congestion premise did not survive measurement and the project was reframed around concurrency (`adr/ADR-008`); R4 fired and its fallback was taken; R1 fired, was diagnosed and closed; R13 was opened and absorbed.
 
@@ -38,7 +38,7 @@ Execution checklist for the whole project. Every task traces to a specification 
 | 2 · Simulator and baselines | 18 | 18 | ☑ | Review 2 |
 | 3 · Forecaster | 12 | 11 + 1 cut | ☑ | Review 2 |
 | 4 · Optimizer P2 | 11 | 11 | ☑ | Review 2 |
-| 5 · RL agent P3 | 13 | 0 | ☐ | Review 3 |
+| 5 · RL agent P3 | 13 | 6 | ☐ | Review 3 |
 | 6 · Evaluation and write-up | 17 | 0 | ☐ | Review 3 |
 | 7 · On-chain demo `[opt]` | 12 | 0 | ☐ | Review 3 |
 | X · Cross-cutting | 14 | 6 | — | all |
@@ -648,6 +648,36 @@ Log episode return, action distribution over time, mean queue depth and mask-hit
 - **A4** — a linear rather than quadratic latency penalty. Does the tail penalty do the work?
 
 **Done when** — both are reported. **If A3 shows no degradation, the claim weakens from "congestion-aware" to "queue-aware" and the report must say so.**
+
+### Phase 5 status — environment and training pipeline built and validated
+
+**Done (P5-1 … P5-6, P5-11 partial):** Gymnasium env, 11-D state, masked action
+space, reward with calibrated weights, constant-product slippage, and the
+diagnostics. `scripts/train_rl.py` runs end to end and the SB3 env checker
+passes. **240 tests.**
+
+| Guard | Status |
+|---|---|
+| **T-L3** — a random agent cannot execute an illegal action | ✅ masked inside `step`, not only exposed |
+| **T-L4** — reward terms commensurable | ✅ measured normalisers; latency is ~19× cost raw, hence mandatory |
+| **T-L6** — collapse detector | ✅ entropy floor; always-WAIT scores 0.0, a trained agent 0.68 |
+| **T-I1/T-I2 at the RL boundary** | ✅ every proposed `n` is Gate A feasible; always-WAIT still settles orders |
+| ADR-004 guard | ✅ a test asserts no rejection/bounce/fail term exists in the reward |
+
+**Smoke run (8,000 steps, seed 0, validation split):** agent return
+−1,871 ± 534 against a greedy-by-mask reference of −3,976; action entropy 0.678;
+**not collapsed**. Encouraging, but 8k steps is not a result.
+
+**A real bug the environment tests caught.** The first implementation never
+advanced the block index when the agent chose WAIT, so an episode looped on one
+block forever — 5,000 steps on a 300-block window with one order settled. Stepping
+is now `act → advance → seek the next decision point`, and
+`test_the_episode_terminates_and_advances` pins it.
+
+**Remaining (P5-7 … P5-13):** the full 2M-step runs across five seeds, checkpoint
+reproducibility (T-L5), figure F7, and ablations A3/A4. At roughly 6 h per seed
+that is ~30 h of compute and is the next thing to schedule, not something to slip
+into a working session.
 
 ### ✅ Phase 5 exit gate
 - [ ] T-L3 passes — a random agent cannot act illegally
