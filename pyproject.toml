@@ -55,3 +55,10 @@ src = ["src", "tests", "scripts"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.isort]
+# Stated explicitly rather than left to ruff's first-party heuristic. That
+# heuristic reads the environment — with `batcher` pip-installed, CI classified
+# it as third-party while a local checkout classified it first-party, so the same
+# ruff version on the same files passed locally and failed in CI.
+known-first-party = ["batcher", "conftest"]
