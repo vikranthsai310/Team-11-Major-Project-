@@ -133,6 +133,12 @@ If S1 fails, report it and continue. A policy over a moving-average forecast is 
 - Gymnasium environment with action masking
 - Reward with calibrated term scales
 - DQN agent, five seeds
+
+> **Decided 2026-09-13.** Trained at **200,000 steps per seed**, a tenth of the
+> 2M the ML spec sets, to keep all five seeds within ~3 h of laptop CPU rather
+> than ~30 h. The seed count is the non-negotiable part; P3 beating P2 is not an
+> exit gate. Results are therefore a **lower bound** and the report must say so.
+> Full rationale and revisit trigger: `18-TODO.md` Phase 5.
 - Diagnostics: action distribution over congestion deciles (figure F7)
 - Ablations A3 and A4
 

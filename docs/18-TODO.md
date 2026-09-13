@@ -674,10 +674,34 @@ block forever — 5,000 steps on a 300-block window with one order settled. Step
 is now `act → advance → seek the next decision point`, and
 `test_the_episode_terminates_and_advances` pins it.
 
-**Remaining (P5-7 … P5-13):** the full 2M-step runs across five seeds, checkpoint
-reproducibility (T-L5), figure F7, and ablations A3/A4. At roughly 6 h per seed
-that is ~30 h of compute and is the next thing to schedule, not something to slip
-into a working session.
+### ⚠ Training budget reduced from 2M to 200k steps — team decision, must be reported
+
+`06-ML-SPEC.md` §5 specifies 2M timesteps per seed. **Five seeds are trained at
+200,000 steps instead — a tenth of the specified budget.**
+
+*Why.* Five seeds is the part that is not negotiable: "a single-seed RL result is
+not a result". At ~6 h per seed the full budget is ~30 h of laptop CPU, against
+~3 h at the reduced budget. Given that P3 beating P2 is **not** an exit gate, and
+that the project's defensible result already exists at Phase 4, spending the
+seed count to buy step count would have been the wrong trade.
+
+*What it costs.* The agent is very likely under-trained. Any result must be read
+as a **lower bound** on what DQN could achieve here, and the report must say so
+in those words. If P3 underperforms P2, "under-trained at a tenth of the
+specified budget" is a live explanation that cannot be ruled out — and it must be
+offered rather than left for a reviewer to raise.
+
+*What it does not change.* The exit gate is unaffected: the mask still holds, the
+reward is still calibrated, collapse is still detected, and five seeds are still
+reported with mean and standard deviation.
+
+*Trigger to revisit.* If P3 comes within noise of P2, or if the action-entropy
+trace is still rising at 200k, run the full budget on one seed before concluding
+anything. Improvement still in progress at the cutoff is evidence of
+under-training, not of a ceiling.
+
+**Remaining (P5-9 … P5-13):** checkpoint reproducibility (T-L5), figure F7, and
+ablations A3/A4, once the five seeds land.
 
 ### ✅ Phase 5 exit gate
 - [ ] T-L3 passes — a random agent cannot act illegally
