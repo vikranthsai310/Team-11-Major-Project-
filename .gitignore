@@ -28,8 +28,11 @@ venv/
 __pycache__/
 *.py[cod]
 *.egg-info/
-build/
-dist/
+# Anchored to the repository root. Unanchored, `build/` also matches
+# src/batcher/build/ — the fee model and both capacity gates — which silently
+# kept that package out of the repository entirely until CI could not import it.
+/build/
+/dist/
 .pytest_cache/
 .ruff_cache/
 .coverage

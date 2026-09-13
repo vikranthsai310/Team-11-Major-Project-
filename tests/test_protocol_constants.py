@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import subprocess
 from pathlib import Path
 
 from batcher.config import protocol
@@ -67,6 +68,39 @@ def test_no_constant_literals_outside_protocol(src_root):
 
     message = "Protocol constants must be imported from batcher.config.protocol:\n"
     assert not findings, message + "\n".join(findings)
+
+
+def test_no_source_file_is_hidden_from_git(repo_root, src_root):
+    """Every source file must be tracked, or the repository is not the project.
+
+    `.gitignore` carried the conventional `build/` entry, which without a leading
+    slash matches *any* directory of that name — including `src/batcher/build/`,
+    the fee model and both capacity gates. The package was silently absent from
+    every commit until CI could not import it. Tests passing locally say nothing
+    about what was actually published.
+    """
+    sources = [
+        path
+        for directory in ("src", "tests", "scripts")
+        for path in (repo_root / directory).rglob("*.py")
+        if "__pycache__" not in path.parts
+    ]
+    assert sources, "no source files found"
+
+    result = subprocess.run(
+        ["git", "check-ignore", "--stdin"],
+        input="\n".join(str(path) for path in sources),
+        capture_output=True,
+        text=True,
+        cwd=repo_root,
+    )
+    ignored = [line for line in result.stdout.splitlines() if line.strip()]
+    assert not ignored, "source files excluded by .gitignore:\n" + "\n".join(ignored)
+
+    tracked = subprocess.run(
+        ["git", "ls-files", str(src_root)], capture_output=True, text=True, cwd=repo_root
+    ).stdout
+    assert "batcher/build/estimator.py" in tracked.replace("\\", "/")
 
 
 def test_the_no_literals_check_catches_a_planted_literal(tmp_path):
