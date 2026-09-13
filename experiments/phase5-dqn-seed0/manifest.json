@@ -1,0 +1,70 @@
+{
+  "algorithm": "DQN",
+  "blocks_per_episode": 1000,
+  "config": {
+    "batch_size": 64,
+    "buffer_size": 100000,
+    "exploration_final_eps": 0.05,
+    "exploration_fraction": 0.2,
+    "exploration_initial_eps": 1.0,
+    "gamma": 0.99,
+    "learning_rate": 0.0001,
+    "learning_starts": 1000
+  },
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "created_utc": "2026-09-13T16:44:18+00:00",
+  "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "experiment_id": "phase5-dqn-seed0",
+  "forecaster": "lgbm",
+  "git": {
+    "dirty": false,
+    "sha": "dd97e2b987b5f2165af3ce48eb60ed620ffeec84"
+  },
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "reward_weights": {
+    "cost_norm": 319795662.5,
+    "latency_norm": 9440411037.5,
+    "lock_norm": 2.0,
+    "slip_norm": 12.227383276164039,
+    "w_cost": 1.0,
+    "w_latency": 1.0,
+    "w_lock": 1.0,
+    "w_slip": 1.0
+  },
+  "seed": 0,
+  "steps": 200000,
+  "train_episodes": 8
+}

@@ -358,6 +358,71 @@ def figure_f4(
     return paths
 
 
+SUBMIT_GREEN = "#0ca30c"
+
+
+def figure_f7(profile: dict, out_dir: Path, provenance: str = "") -> dict[str, Path]:
+    """F7 · Action distribution over congestion deciles.
+
+    **This is the figure that distinguishes a learned policy from a lucky one.**
+    A flat profile means the agent ignores congestion however good F5 looks, and
+    should be cross-checked against ablation A3.
+
+    WAIT carries no colour — it is the common case, and colouring it would drown
+    the state that matters (``docs/17-UI-SPEC.md`` A8).
+    """
+    apply_style()
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    deciles = sorted(profile, key=int)
+    submit = np.array([profile[key]["submit_rate"] for key in deciles])
+    wait = 1.0 - submit
+    x = np.arange(len(deciles))
+
+    figure, axis = plt.subplots(figsize=(8.5, 4.4))
+    axis.bar(x, submit, color=SUBMIT_GREEN, width=0.74, label="SUBMIT")
+    axis.bar(x, wait, bottom=submit, color=MUTED, alpha=0.35, width=0.74, label="WAIT")
+
+    # Mean batch size as direct-labelled numerals, never a second y-axis.
+    for index, key in enumerate(deciles):
+        batch = profile[key].get("mean_batch_n")
+        if batch:
+            axis.text(
+                index,
+                1.02,
+                f"{batch:.0f}",
+                ha="center",
+                fontsize=7.5,
+                color=INK_SECONDARY,
+            )
+
+    axis.set_ylim(0, 1.10)
+    axis.set_xticks(x)
+    axis.set_xticklabels([str(int(key) + 1) for key in deciles])
+    axis.set_xlabel("block fill decile (1 = emptiest)")
+    axis.set_ylabel("share of decisions")
+    axis.set_title("F7 · Action distribution over congestion deciles", loc="left")
+    axis.yaxis.set_major_formatter(lambda value, _: f"{value:.0%}")
+    axis.legend(loc="lower center", bbox_to_anchor=(0.5, -0.28), frameon=False, fontsize=8, ncol=2)
+    axis.text(
+        0, 1.06, "mean batch size", fontsize=7, color=MUTED, ha="left", transform=axis.transData
+    )
+
+    _provenance(figure, provenance)
+    figure.tight_layout()
+
+    paths = {"figure": out_dir / "F7_action_distribution.png"}
+    figure.savefig(paths["figure"], bbox_inches="tight")
+    plt.close(figure)
+
+    paths["table"] = out_dir.parent / "tables" / "F7_action_distribution.csv"
+    paths["table"].parent.mkdir(parents=True, exist_ok=True)
+    pd.DataFrame([{"decile": int(key) + 1, **profile[key]} for key in deciles]).to_csv(
+        paths["table"], index=False
+    )
+    return paths
+
+
 def figure_f3(out_dir: Path, n_max: int = 30, provenance: str = "") -> dict[str, Path]:
     """F3 · Amortization curve — why not simply always batch the maximum?
 

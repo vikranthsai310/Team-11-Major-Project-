@@ -131,6 +131,12 @@ class BatchingEnv(gym.Env):
         self.settled = []
         self.mask_hits = 0
         self.actions_taken = []
+        self.submissions: list[int] = []
+        self.fees: list[int] = []
+        self.locked_slots = 0
+        self.total_slots = 0
+        self.orders_arrived = 0
+        self.fills: list[float] = []
 
         self._seek_decision()
         return self._state(), {}
@@ -153,11 +159,14 @@ class BatchingEnv(gym.Env):
         if n > 0:
             taken = self.queue.take(n)
             self.in_flight = build_in_flight(taken, self.current_slot, self.ttl_slots)
+            self.submissions.append(len(taken))
+            self.fees.append(self.in_flight.fee)
 
         # The decision for this block is made; move past it before looking for
         # the next decision point, or the episode never advances on WAIT.
         self.index += 1
         locked_slots = self._seek_decision()
+        self.locked_slots += locked_slots
 
         reward = self._reward(settled_before, locked_slots, n)
         terminated = self.index >= len(self.blocks)
@@ -233,10 +242,14 @@ class BatchingEnv(gym.Env):
         slot = int(block["abs_slot"])
         locked_slots = 0
 
+        self.total_slots += max(0, slot - self.previous_slot)
+        self.fills.append(float(block["fill_pct"]))
+
         arriving = self.stream.arrivals(self.previous_slot, slot, block["block_time"].hour)
         for order in arriving:
             self.arrival_prices[order.order_id] = self.pool.price
         self.queue.admit(arriving)
+        self.orders_arrived += len(arriving)
         self.queue.evict_expired(slot)
 
         decidable = True
@@ -259,6 +272,30 @@ class BatchingEnv(gym.Env):
 
         self.previous_slot = slot
         return locked_slots, decidable
+
+    def to_episode_result(self):
+        """Convert to the simulator's result type so the *same* metrics apply.
+
+        The RL return is a weighted penalty in reward units and is not comparable
+        to P2's numbers. Scoring the agent through this path is what makes a
+        P3-against-P2 claim mean anything.
+        """
+        from batcher.sim.env import EpisodeResult
+
+        still_queued = list(self.queue.orders)
+        if self.in_flight is not None:
+            still_queued.extend(self.in_flight.orders)
+
+        return EpisodeResult(
+            settled=list(self.settled),
+            expired=list(self.queue.expired),
+            still_queued=still_queued,
+            submissions=list(self.submissions),
+            fees=list(self.fees),
+            locked_slots=self.locked_slots,
+            total_slots=self.total_slots,
+            orders_arrived=self.orders_arrived,
+        )
 
     def _fits(self, block) -> bool:
         from batcher.build.estimator import gate_b

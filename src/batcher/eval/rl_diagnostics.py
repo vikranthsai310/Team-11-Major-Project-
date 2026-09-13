@@ -51,7 +51,7 @@ def action_profile(actions, n_actions: int) -> dict[int, float]:
     return {index: counts.get(index, 0) / len(actions) for index in range(n_actions)}
 
 
-def profile_by_congestion(actions, fills, deciles: int = 10) -> dict:
+def profile_by_congestion(actions, fills, batch_sizes=None, deciles: int = 10) -> dict:
     """Submit rate against congestion decile — the basis of figure F7.
 
     **This is what distinguishes a learned policy from a lucky one.** A flat
@@ -67,13 +67,41 @@ def profile_by_congestion(actions, fills, deciles: int = 10) -> dict:
     edges[-1] += 1e-9
     bucket = np.clip(np.searchsorted(edges, fills, side="right") - 1, 0, deciles - 1)
 
+    sizes = np.asarray(list(batch_sizes)) if batch_sizes is not None else None
+
     profile = {}
     for decile in range(deciles):
         selected = actions[bucket == decile]
         if len(selected) == 0:
             continue
-        profile[decile] = {
-            "submit_rate": float((selected != 0).mean()),
-            "n": int(len(selected)),
-        }
+
+        entry = {"submit_rate": float((selected != 0).mean()), "n": int(len(selected))}
+        if sizes is not None and len(sizes) == len(actions):
+            submitted = sizes[(bucket == decile) & (actions != 0)]
+            entry["mean_batch_n"] = float(submitted.mean()) if len(submitted) else 0.0
+        profile[decile] = entry
     return profile
+
+
+def profile_trend(profile: dict) -> dict:
+    """Does the submit rate actually vary with congestion, and in which direction?
+
+    A **flat** profile means the agent ignores congestion however good the
+    headline numbers look. A rising one means it submits *more* as blocks fill,
+    which is the opposite of congestion avoidance and is more likely a queue-depth
+    confound than a learned behaviour — ablation A3 is what separates the two.
+    """
+    if len(profile) < 2:
+        return {"flat": True, "direction": "none", "ratio": 1.0}
+
+    ordered = [profile[key]["submit_rate"] for key in sorted(profile, key=int)]
+    low, high = ordered[0], ordered[-1]
+    ratio = high / low if low > 0 else float("inf")
+
+    return {
+        "flat": bool(abs(high - low) < 0.05),
+        "direction": "rising" if high > low else "falling",
+        "ratio": float(ratio),
+        "lowest_decile": float(low),
+        "highest_decile": float(high),
+    }

@@ -2,7 +2,7 @@
 
 Execution checklist for the whole project. Every task traces to a specification document, states its deliverable as a file path, and states the condition under which it may be ticked.
 
-**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–4 complete — the project has a defensible result.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen, P2 evaluated against tuned baselines with zero Gate A violations. Phase 5's RL environment and training pipeline are built and validated; the 5-seed x 2M-step runs remain. **240 tests green.**
+**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–4 complete — the project has a defensible result.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen, P2 evaluated against tuned baselines with zero Gate A violations. Phase 5 trained five DQN seeds at 200k steps: none collapsed, zero Gate A violations, and P3 dominates two P2 configurations while being dominated by none. **240 tests green.**
 
 **Phase 1 outcomes:** the congestion premise did not survive measurement and the project was reframed around concurrency (`adr/ADR-008`); R4 fired and its fallback was taken; R1 fired, was diagnosed and closed; R13 was opened and absorbed.
 
@@ -38,7 +38,7 @@ Execution checklist for the whole project. Every task traces to a specification 
 | 2 · Simulator and baselines | 18 | 18 | ☑ | Review 2 |
 | 3 · Forecaster | 12 | 11 + 1 cut | ☑ | Review 2 |
 | 4 · Optimizer P2 | 11 | 11 | ☑ | Review 2 |
-| 5 · RL agent P3 | 13 | 6 | ☐ | Review 3 |
+| 5 · RL agent P3 | 13 | 10 | ☐ | Review 3 |
 | 6 · Evaluation and write-up | 17 | 0 | ☐ | Review 3 |
 | 7 · On-chain demo `[opt]` | 12 | 0 | ☐ | Review 3 |
 | X · Cross-cutting | 14 | 6 | — | all |
@@ -700,8 +700,81 @@ trace is still rising at 200k, run the full budget on one seed before concluding
 anything. Improvement still in progress at the cutoff is evidence of
 under-training, not of a ceiling.
 
-**Remaining (P5-9 … P5-13):** checkpoint reproducibility (T-L5), figure F7, and
-ablations A3/A4, once the five seeds land.
+### Phase 5 results — five seeds at 200k steps, validation split
+
+Scored through the **same metric path as every other policy**. The RL return is a
+weighted penalty in reward units and is not comparable to P2's numbers; running
+the checkpoints through `metrics.compute` is what makes a P3-against-P2 claim
+mean anything.
+
+| | P3 (mean ± sd, 5 seeds) |
+|---|---|
+| L-p95 | **149.0 ± 13.1** |
+| C-user | **87,669 ± 6,211** |
+| batch n | 12.28 ± 1.81 |
+| lock occupancy | 0.26 |
+| expiry rate | 0.00 |
+| **Gate A violations** | **0** — S2 holds for the learned agent too |
+| Collapsed seeds | **0 of 5** (T-L6) |
+
+**Against the whole P2 frontier, same episodes and metrics:**
+
+| Policy | L-p95 | C-user |
+|---|---|---|
+| e3(greedy) ≡ p2(N=1) | 114.0 | 150,168 |
+| p2(N=4) | 121.5 | 116,759 |
+| p2(N=8) | 131.0 | 102,729 |
+| p2(N=12) | 150.3 | 98,062 |
+| p2(N=20) | 156.3 | 96,457 |
+| **P3 (mean)** | **149.0** | **87,669** |
+
+**P3 dominates `p2(N=12)` and `p2(N=20)` on both axes, and is dominated by
+nothing.** It reaches a per-user cost no P2 configuration attains — 9 % below
+P2's best — at a tail latency between P2's N=12 and N=20. The learned policy
+therefore *extends* the achievable frontier rather than merely sitting on it,
+and it does so at a tenth of the specified training budget.
+
+⚠ **Suggestive, not established.** Four episodes, five seeds, medians without
+confidence intervals, and the validation split. The paired Wilcoxon tests and
+bootstrap CIs are Phase 6 work, and the test split is still untouched. Seed
+variance is real: sd is 8.8 % of the L-p95 mean, and seed 0 behaves like a
+different policy entirely (L-p95 123.5, entropy 0.937, batch n 8.9 against ~13
+for the rest).
+
+### ⚠ The agent is queue-aware, not congestion-aware
+
+Figure **F7** is not flat — submit rate climbs from 7 % in the emptiest decile to
+53 % in the fullest, a ratio of 7.8. On its own that looks like congestion
+reasoning. It is not.
+
+Zeroing `fill_hat` in the observation at inference time changes almost nothing:
+
+| Seed | L-p95 with forecast | forecast zeroed | Δ |
+|---|---|---|---|
+| 0 | 123.5 | 121.5 | −1.6 % |
+| 1 | 157.5 | 155.0 | −1.6 % |
+| 2 | 152.0 | 149.5 | −1.6 % |
+| 3 | 152.0 | 149.0 | −2.0 % |
+| 4 | 160.0 | 167.5 | +4.7 % |
+
+Mean |Δ| is **2.3 %**, and **four of five seeds are slightly better without the
+forecast**. The rising F7 profile is therefore a **queue-depth confound** — fuller
+blocks coincide with busier periods, longer slot gaps and deeper queues — not
+congestion avoidance.
+
+This is exactly the outcome P5-13 was written to detect: *"If A3 shows no
+degradation, the claim weakens from 'congestion-aware' to 'queue-aware' and the
+report must say so."* **It must say so.** It is also the third independent route
+to ADR-008's conclusion, after the F4 lag diagnostic and the A1 oracle gap.
+
+*Caveat on method.* This is an **inference-time** ablation — the forecast inputs
+are zeroed on a trained agent. A3 as specified **retrains** without the feature,
+and a retrained agent might lean harder on the remaining state. The cheap version
+is suggestive and points the same way as F4 and A1; the specified version is still
+owed.
+
+**Remaining (P5-9, P5-12, P5-13):** checkpoint reproducibility (T-L5), the
+retrained A3, and A4 (linear vs quadratic latency penalty).
 
 ### ✅ Phase 5 exit gate
 - [ ] T-L3 passes — a random agent cannot act illegally
