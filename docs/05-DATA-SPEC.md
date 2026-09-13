@@ -39,7 +39,7 @@ About 4,300 blocks/day. Ninety days gives roughly **390,000 rows**, approximatel
 
 Neither Koios nor Blockfrost exposes execution units on the block endpoint. Obtaining them per block means fetching every transaction and summing its redeemers — roughly 390,000 blocks x ~25 transactions ≈ **10 million API calls**, which no free tier permits. The alternative, `cardano-db-sync`, holds the data in `redeemer.unit_mem` and `unit_steps` but requires syncing the full chain: hundreds of gigabytes and several days.
 
-**Resolution (`adr/ADR-005`):** collect `block_size` and `fill_pct` for the full 90 days, and execution units for a **7-day sample** via per-transaction fetch. Report the correlation between size-based and execution-based fullness on the sample, and use it to justify treating size fill as the primary congestion signal.
+**Resolution (`adr/ADR-005`):** collect `block_size` and `fill_pct` for the full 90 days, and execution units for a **2-day sample** via per-transaction fetch (narrowed from 7 days in Phase 1; see `adr/ADR-005` §Amendment). Report the correlation between size-based and execution-based fullness on the sample, and use it to justify treating size fill as the primary congestion signal.
 
 This is a scope decision made deliberately and early, not a limitation discovered late. It must be stated in the report.
 
@@ -97,6 +97,27 @@ lambda(t) = lambda_base * diurnal(hour(t)) * burst(t)
 ```
 
 `burst(t)` injects occasional high-arrival episodes representing events such as NFT mints. Base rate, diurnal shape and burst parameters are recorded in the run manifest so any episode can be regenerated exactly.
+
+### Fitted parameters (Phase 2, resolves open question Q4)
+
+| Parameter | Value | Source |
+|---|---|---|
+| `orders_per_block` (matched, 1.0×) | **2.0** | Modelling choice, stated openly. For scale, D1 measured **3.76 transactions per block across the whole of Cardano**, so one pool drawing 2 is already generous |
+| `diurnal(hour)` | 24 multipliers, mean 1.0 | Fitted to the hourly `tx_count` rhythm in D1, not invented |
+| `base_per_slot` | `orders_per_block / mean(slot_gap)` | `mean(slot_gap)` = 20.34 slots, measured |
+| `bursts_per_day` | **1.0** | Onsets per day |
+| `burst_multiplier` | 6.0 | Intensity during a burst |
+| `burst_hours` | 1.0 | Duration — so bursts occupy ~1/24 of the time |
+| Arrival rates | light 0.5× · matched 1.0× · heavy 2.0× | Reported across all three |
+
+**Why bursts are expressed per day.** They were first parameterised as a
+per-block probability of 0.02. Read against an hour-long duration that means a
+new burst starts every ~50 blocks while each lasts ~180, so the stream sits in
+burst **78 % of the time** and the base rate is never observed: 13.6 orders/block
+arrived where 3.0 were configured. E1 then appeared to collapse at small `M` with
+68 % expiry — a modelling artefact that would have been reported as a policy
+finding. A per-day onset rate cannot be misread that way, and
+`tests/test_orders.py` pins the realised orders-per-block.
 
 **Sensitivity is required, not optional.** Results are reported across at least three arrival rates (light, matched, heavy). A policy tuned to one rate that collapses at another is a weak result, and the evaluation is designed to expose that.
 

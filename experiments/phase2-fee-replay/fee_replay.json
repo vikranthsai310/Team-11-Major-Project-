@@ -1,0 +1,20 @@
+{
+  "transactions": 200,
+  "never_overestimates": true,
+  "exact_matches": 13,
+  "exact_match_rate": 0.065,
+  "simple": {
+    "n": 161,
+    "exact_matches": 13,
+    "median_relative_residual": 0.003862608196922789,
+    "p95_relative_residual": 0.3437253936123166,
+    "max_relative_residual": 0.835907
+  },
+  "scripted": {
+    "n": 39,
+    "exact_matches": 0,
+    "median_relative_residual": 0.29162469596835616,
+    "p95_relative_residual": 0.5115820663442464,
+    "max_relative_residual": 0.513413546431391
+  }
+}

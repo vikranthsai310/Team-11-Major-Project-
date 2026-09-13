@@ -1,0 +1,43 @@
+PHASE 1 · PREDICTABILITY REPORT
+==============================================================
+
+dataset            d1_blocks_20260613_20260913.parquet
+rows               388,781
+window             2026-06-13 21:48:17+00:00 .. 2026-09-13 09:58:43+00:00
+
+CONGESTION (F1, F2)
+  mean fill              6.83%
+  median fill            2.95%
+  95th percentile        25.39%
+  max fill               98.82%
+  blocks in 80-90 % band 0.170%
+  blocks above 80 %      0.564%   <- goes in the abstract
+  blocks above 90 %      0.395%
+
+EPISODE STRUCTURE — is congestion sustained or interleaved?
+  congested blocks       2,193
+  contiguous episodes    1,679   (mean run 1.3 blocks)
+  longest run            10 blocks
+  days with any          73 of 93
+  in the busiest 5 days  64%
+
+PREDICTABILITY (the R4 gate)
+  autocorrelation lag 1  0.3724
+  autocorrelation lag 5  0.3216
+  autocorrelation lag 20 0.2723
+  MAE lag-1 persistence  0.06069
+  MAE global mean        0.06065
+  MAE rolling mean k=20  0.05157
+  lag-1 improvement      -0.1%
+  VERDICT                close to a random walk — take the R4 fallback
+
+EXECUTION-UNIT PROXY (ADR-005 / R1)
+  sampled rows           17,280
+
+  window        blocks  mean fill    >80%  no script  r(size,mem)  size binds  mem-only
+  2026-07-02     8,640     19.63%   8.29%      31.7%        0.912       90.0%         0
+  2026-09-11     8,640      4.76%   0.51%      50.7%        0.588       83.3%         1
+
+  status                 ok
+
+The team must now record an explicit written decision (P1-16).

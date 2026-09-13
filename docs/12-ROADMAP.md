@@ -45,6 +45,25 @@ Build order, milestones, exit gates and scope-cut policy. The sequence follows t
 
 **Decision point.** If a naive lag-1 predictor barely beats the global mean, congestion is close to a random walk at this horizon. Take the R4 fallback: pivot to queue-aware batching, report the negative forecasting result as a finding, and reduce Phase 3 to the E4 baseline plus one model.
 
+> **Decided 2026-09-13 — full 92-day window, 388,781 blocks.** The rule fired:
+> lag-1 MAE 0.06069 against a global-mean 0.06065, a 0.1 % *deficit*.
+> The fallback is taken and recorded in `adr/ADR-008` — with a qualification that
+> matters more than the verdict. A rolling mean beats the global mean by **15.0 %**
+> (0.05157), and autocorrelation is still **0.27 at lag 20**. The series is not
+> structureless; lag-1 persistence is simply the wrong probe for a spiky,
+> right-skewed series scored by MAE, because it copies spikes forward and pays
+> twice.
+>
+> **Do not read this as "forecasting is pointless."** It means E4 is a strong
+> baseline, and S1 — P1 beating *E4* — is a real open question for Phase 3.
+> Phase 3 is reduced to **E4 plus LightGBM**; the LSTM is cut as scope-cut #2, on
+> the grounds that the forecaster's *policy* leverage is limited (Gate B binds once
+> in ~180 blocks), **not** on the grounds that the series is unpredictable.
+>
+> Phase 1 also found congestion rare and never sustained rather than merely
+> unpredictable — a separate and larger finding, registered as R13 and reframed by
+> ADR-008.
+
 **Risk addressed** — R1, R4, R7
 
 ---

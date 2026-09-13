@@ -101,7 +101,9 @@ This is consistent with observed Minswap batch sizes of about 25–40 orders, wh
 Two design consequences:
 
 1. The action space is small and discrete — `WAIT` plus `SUBMIT(n)` for `n` in `1..n_max`. This makes DQN genuinely tractable rather than aspirational.
-2. A 30-order batch is roughly 9–10 KB, about **11 % of a block**. It therefore fails Gate B only when the block is above roughly 89 % full — precisely the 80–90 % peak regime the project targets. The problem statement survives the correction, now with a number behind it.
+2. A 30-order batch is roughly 9–10 KB, about **11 % of a block**. It therefore fails Gate B only when the block is above roughly 89 % full.
+
+   *Revised in Phase 1 (`adr/ADR-008`).* This was written expecting the 89 % threshold to sit inside a frequently-visited 80–90 % regime. Measurement over 92 days says otherwise: 0.564 % of blocks exceed 80 % and 0.395 % exceed 90 %, so **Gate B binds roughly once in 180 blocks** — and never for more than 10 consecutive blocks, so waiting is always a sufficient response. The arithmetic above is unchanged and still bounds batch size; what changed is how often the bound is reached. The project's motivation moved to the pool lock, which binds on every batch regardless of block occupancy.
 
 These figures are estimates until measured. Calibrating them against real preprod transactions is an M5 acceptance criterion, and the numbers here must be updated from measurement before the final report.
 

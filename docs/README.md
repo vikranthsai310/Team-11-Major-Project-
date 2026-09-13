@@ -53,18 +53,19 @@ Several of these **overturn assumptions in the earlier material in `Doc/`**. A r
 | [005](adr/ADR-005-size-only-d1.md) | Size-based congestion at scale, execution units on a sample | The full-window ExUnit collection plan |
 | [006](adr/ADR-006-passthrough-fee.md) | Pass-through batcher fee so amortization reaches users | The implicit flat-fee assumption |
 | [007](adr/ADR-007-real-slot-clock.md) | Simulator advances on recorded slots, not a fixed 20 s tick | The fixed-tick simulator design |
+| [008](adr/ADR-008-concurrency-not-congestion.md) | Motivate the work by concurrency, not congestion | `01-PRD.md` §2.4 — measured block fill contradicts the 80–90 % claim |
 
 ---
 
 ## The project in five sentences
 
-A Cardano DEX liquidity pool is a single UTXO that can be consumed only once per block, so swaps must be aggregated by an off-chain **batcher**. Deployed batchers trigger on constants and never read the chain. Because Cardano fees are deterministic, congestion costs **latency**, not money — so the right objective is to minimize confirmation delay and per-user cost under hard capacity limits. This project forecasts near-term block capacity and learns when to submit a batch and how large to make it, benchmarked in a simulator that replays real recorded congestion against tuned static baselines. The system is a server-side process: no wallet, no extension, no website.
+A Cardano DEX liquidity pool is a single UTXO that can be consumed only once per block, so swaps must be aggregated by an off-chain **batcher**, and a batch in flight holds that pool until it confirms while every later order queues behind it. Deployed batchers trigger on constants and never read the chain. Because Cardano fees are deterministic, this waiting costs **latency**, not money — so the right objective is to minimize confirmation delay and per-user cost under hard capacity limits. This project learns when to submit a batch and how large to make it, benchmarked in a simulator that replays real recorded blocks against tuned static baselines; near-term capacity forecasting is retained as a secondary input, after Phase 1 measured 92 days of mainnet at a 3.0 % median fill — with no run above 80 % lasting longer than five minutes — and reframed the problem from congestion to concurrency (`adr/ADR-008`). The system is a server-side process: no wallet, no extension, no website.
 
 ---
 
 ## Authority
 
-Where this documentation conflicts with the earlier artifacts in `Doc/` (abstract, literature-review deck, proposed-system deck), **this documentation is authoritative** and `adr/` explains each divergence. The `Doc/` artifacts need three specific corrections before resubmission — deck slide 13's optimizer formula, slide 15's execution-unit footnote, and the abstract's batch-sizing sentence.
+Where this documentation conflicts with the earlier artifacts in `Doc/` (abstract, literature-review deck, proposed-system deck), **this documentation is authoritative** and `adr/` explains each divergence. The `Doc/` artifacts need four corrections before resubmission — the congestion framing throughout (now the largest, per ADR-008), deck slide 13's optimizer formula, slide 15's execution-unit footnote, and the abstract's batch-sizing sentence.
 
 ## Status
 
@@ -72,6 +73,6 @@ Where this documentation conflicts with the earlier artifacts in `Doc/` (abstrac
 |---|---|
 | Specification | Complete — documents 01–17 |
 | Decision records | Complete — ADR 001–007 |
-| Implementation | Not started; begin at `18-TODO.md` Phase 0 |
+| Implementation | Phases 0–3 complete; Phase 4 next — see `18-TODO.md` |
 | Report chapters 1–5 | Assemblable from these documents today |
 | Report chapters 6–8 | Await implementation and results |

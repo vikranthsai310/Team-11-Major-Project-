@@ -48,6 +48,8 @@ Gate A bounds **how large a batch may be**. Gate B determines **whether it fits 
 - The action space becomes small and discrete, which makes DQN genuinely tractable rather than aspirational
 - The problem statement survives with a number behind it: a 30-order batch is about 11 % of a block, so it fails Gate B only above roughly 89 % fullness — precisely the 80–90 % peak regime the project targets
 
+  > **Superseded in part by `ADR-008`.** The Gate A / Gate B distinction this ADR establishes stands unchanged. The closing clause does not: Phase 1 measured 0.564 % of blocks above 80 % over 92 days, so the 89 % threshold is reached about once in 180 blocks rather than routinely — and never for more than 10 consecutive blocks. The motivation moved to the pool lock; this ADR's decision did not change.
+
 **Negative**
 - Removes an imagined lever. The policy cannot "batch bigger when the chain is quiet" beyond `n_max`; on an idle chain the only remaining decision is *when*, not *how much*
 - The per-order size and execution estimates must be calibrated against real transactions, or Gate A is enforced against fiction (M5 acceptance criterion; risk R5)

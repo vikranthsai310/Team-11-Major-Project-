@@ -1,0 +1,174 @@
+{
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "created_utc": "2026-09-13T13:54:36+00:00",
+  "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "experiment_id": "phase1-predictability",
+  "figures": {
+    "F1": {
+      "figure": "figures\\F1_congestion_over_time.png",
+      "table": "tables\\F1_daily_fill.csv"
+    },
+    "F2": {
+      "figure": "figures\\F2_fill_distribution.png",
+      "table": "tables\\F2_fill_histogram.csv"
+    },
+    "F3": {
+      "figure": "figures\\F3_amortization_curve.png",
+      "table": "tables\\F3_amortization.csv"
+    }
+  },
+  "git": {
+    "dirty": true,
+    "sha": "2b82e6465176112d6ac71967b3647da619eea517"
+  },
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "results": {
+    "congestion": {
+      "max_fill": 0.9881924986839294,
+      "mean_fill": 0.06833202391862869,
+      "median_fill": 0.029507724568247795,
+      "p95_fill": 0.2538507580757141,
+      "share_above_80": 0.005640707750635962,
+      "share_above_90": 0.003945666069072306,
+      "share_in_band": 0.0016950416815636566
+    },
+    "dataset": "d1_blocks_20260613_20260913.parquet",
+    "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+    "episodes": {
+      "busiest_day_share": 0.11090867683898883,
+      "congested_blocks": 2193,
+      "days_total": 93,
+      "days_with_any": 73,
+      "episodes": 1679,
+      "longest_run_blocks": 10,
+      "mean_run_blocks": 1.3061346039309112,
+      "share_in_top_five_days": 0.6420428636570907
+    },
+    "exunits_proxy": {
+      "corr_size_vs_mem": 0.8522443982551414,
+      "corr_size_vs_steps": 0.8871539835738669,
+      "pooled": {
+        "blocks": 17280,
+        "blocks_where_only_memory_binds": 1,
+        "corr_size_vs_mem": 0.8522443982551414,
+        "corr_size_vs_steps": 0.8871539835738669,
+        "end": "2026-09-13 09:58:43+00:00",
+        "max_mem_pct": 0.8356442451477051,
+        "max_step_pct": 0.4989522695541382,
+        "mean_fill": 0.12193960696458817,
+        "share_above_80": 0.04398148148148148,
+        "share_size_binds_first": 0.8662037037037037,
+        "share_without_scripts": 0.41226851851851853,
+        "spearman_size_vs_mem": 0.8685610934350089,
+        "start": "2026-07-02 00:12:59+00:00"
+      },
+      "sampled_rows": 17280,
+      "status": "ok",
+      "windows": [
+        {
+          "blocks": 8640,
+          "blocks_where_only_memory_binds": 0,
+          "corr_size_vs_mem": 0.9124502492474607,
+          "corr_size_vs_steps": 0.9457591678218703,
+          "end": "2026-07-03 23:59:26+00:00",
+          "max_mem_pct": 0.8211295008659363,
+          "max_step_pct": 0.44904640316963196,
+          "mean_fill": 0.19632644951343536,
+          "share_above_80": 0.08287037037037037,
+          "share_size_binds_first": 0.899537037037037,
+          "share_without_scripts": 0.3173611111111111,
+          "spearman_size_vs_mem": 0.9213574015566244,
+          "start": "2026-07-02 00:12:59+00:00"
+        },
+        {
+          "blocks": 8640,
+          "blocks_where_only_memory_binds": 1,
+          "corr_size_vs_mem": 0.5878387398394834,
+          "corr_size_vs_steps": 0.5685837528063242,
+          "end": "2026-09-13 09:58:43+00:00",
+          "max_mem_pct": 0.8356442451477051,
+          "max_step_pct": 0.4989522695541382,
+          "mean_fill": 0.04755277559161186,
+          "share_above_80": 0.005092592592592593,
+          "share_size_binds_first": 0.8328703703703704,
+          "share_without_scripts": 0.507175925925926,
+          "spearman_size_vs_mem": 0.7758962876636466,
+          "start": "2026-09-11 08:29:56+00:00"
+        }
+      ]
+    },
+    "predictability": {
+      "autocorrelation": {
+        "1": 0.3723978606075593,
+        "10": 0.2982601291381238,
+        "11": 0.2959241434182257,
+        "12": 0.29351678690674377,
+        "13": 0.29070924496779177,
+        "14": 0.2844013681228728,
+        "15": 0.2849137651767717,
+        "16": 0.2802337522131226,
+        "17": 0.27808904629217857,
+        "18": 0.2819339533934472,
+        "19": 0.281315115900362,
+        "2": 0.3650741330975967,
+        "20": 0.27231937901072345,
+        "3": 0.3414902334478824,
+        "4": 0.3304687624972485,
+        "5": 0.321596043739031,
+        "6": 0.3167718905314019,
+        "7": 0.3150299623673054,
+        "8": 0.30820471646527486,
+        "9": 0.29879456439511803
+      },
+      "lag1_improvement_over_mean": -0.0005772309595779568,
+      "mae_global_mean": 0.06065211445093155,
+      "mae_lag1_persistence": 0.060687124729156494,
+      "mae_rolling_mean_k20": 0.05157001013567735,
+      "split": {
+        "test_rows": 58317,
+        "train_end_slot": 195360604,
+        "val_end_slot": 196546215
+      },
+      "verdict": "close to a random walk \u2014 take the R4 fallback"
+    },
+    "rows": 388781,
+    "window": {
+      "end_time": "2026-09-13 09:58:43+00:00",
+      "start_time": "2026-06-13 21:48:17+00:00"
+    }
+  },
+  "seed": 0
+}

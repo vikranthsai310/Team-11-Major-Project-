@@ -1,0 +1,34 @@
+{
+  "checksum_sha256": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "collector_git": {
+    "dirty": true,
+    "sha": "2b82e6465176112d6ac71967b3647da619eea517"
+  },
+  "dataset": "d1_blocks_20260613_20260913",
+  "exunits_coverage": {
+    "absent": 371501,
+    "per_tx": 17280
+  },
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "rows": 388781,
+  "source": "koios",
+  "window": {
+    "end_height": 13935052,
+    "end_time": "2026-09-13T09:58:43+00:00",
+    "start_height": 13546272,
+    "start_time": "2026-06-13T21:48:17+00:00"
+  }
+}

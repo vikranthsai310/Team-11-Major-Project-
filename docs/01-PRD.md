@@ -9,7 +9,7 @@
 
 ## 1. Summary
 
-An intelligent off-chain **batcher** for a Cardano decentralized exchange. It observes live blockchain congestion, forecasts near-term block capacity, and decides when to submit a batch of user swap orders and how many orders to include — replacing the fixed rules deployed batchers use today.
+An intelligent off-chain **batcher** for a Cardano decentralized exchange. A DEX pool is a single UTXO that admits one batch per block, so orders queue behind whatever batch is in flight. This system decides when to submit and how many orders to include — managing that shared lock under uncertain confirmation time, and reading the chain before deciding, which the fixed-rule batchers deployed today do not.
 
 The product is a **server-side process**, not a website and not a browser extension. It has no user interface; it is infrastructure that sits behind a DEX.
 
@@ -43,13 +43,48 @@ fee = 44 * size_bytes + 155381 + 0.0577 * mem_units + 0.0000721 * cpu_steps   (l
 
 There is no gas auction and no priority-fee bidding. Two identical transactions cost the same on an idle chain and on a congested one.
 
-**Therefore congestion on Cardano does not cost money. It costs time.** When blocks approach capacity, a batch waits for a later block, and every user inside it waits with it.
+**Therefore waiting on Cardano does not cost money. It costs time.** A batch that does not confirm promptly keeps every user inside it waiting — and, because it holds the pool UTXO while it waits, keeps every order *behind* it waiting too.
 
 This single fact redirects the entire product. The objective is **not** to minimize fees; it is to minimize **confirmation latency** and **per-user cost through amortization**, subject to hard capacity limits. Any framing that promises "lower gas fees during congestion" is technically wrong on Cardano — see `adr/ADR-001`.
 
+Note what this argument does **not** require: that blocks be full. Deterministic fees make time the currency regardless of how busy the chain is, and §2.4 shows the waiting is caused mainly by the pool lock rather than by block capacity.
+
 ### 2.4 Evidence the problem is real
 
-Input Output has publicly described Cardano blocks reaching **80–90 % of capacity** during peak activity. A batch of ~30 orders occupies roughly 11 % of a block, so it fails to fit precisely in that 80–90 % regime. Quantifying this from collected data is deliverable **D1** and the first milestone.
+**This section was rewritten in Phase 1 from measured data. See `adr/ADR-008`.**
+
+The project was originally motivated by a widely-repeated claim that Cardano blocks
+reach 80–90 % of capacity during peak activity, leaving no room for a ~30-order
+batch (~11 % of a block). Deliverable **D1** was collected to quantify it. It does
+not hold on the current chain:
+
+| Statistic | Measured on D1 |
+|---|---|
+| Mean block fill | 6.83 % |
+| Median block fill | 2.95 % |
+| Blocks above 80 % | 0.564 % |
+| Blocks above 90 % | 0.395 % |
+
+*(388,781 blocks over 92 days, 2026-06-13 to 2026-09-13, `sha256 48cd6f8b9a9e`.)*
+
+Congestion is real but **rare and interleaved**. The 2,193 congested blocks fall
+into 1,679 separate episodes; the longest unbroken run above 80 % is **10 blocks,
+five minutes**, and no run reaches 50. They cluster into busy days — 64 % fall in
+the busiest five — but even the busiest day spends only 11.2 % of its blocks above
+80 %. A batcher therefore never faces a *run* of blocks it cannot enter, only
+isolated ones it can wait out. Gate B binds on a 30-order batch above roughly 89 %
+fill: about one block in 180.
+
+**The problem that is real is concurrency, not congestion.** A pool is a single
+UTXO and admits one batch per block; a submitted batch holds it until confirmation,
+and every order behind it waits (`adr/ADR-004`). That constraint is a property of
+the eUTXO ledger and is fully present on an empty chain. It is what deployed
+batchers, triggering on constants, handle badly — and it is what this project
+addresses.
+
+The congestion measurement is retained as a **result** rather than as motivation:
+a characterisation of mainnet block occupancy, and the observation that the
+ecosystem's congestion claim does not describe the chain as it currently runs.
 
 ## 3. Goals and non-goals
 
@@ -152,7 +187,7 @@ S5 failing is a reportable result. **S2 failing is a defect**, not a result.
 | Milestone | Contents | Exit gate |
 |---|---|---|
 | M0 Foundation | Repo, config, protocol constants | All limits in one module, tested |
-| M1 Data | D1 collected, congestion analysed | Plot showing 80–90 % blocks |
+| M1 Data | D1 collected, congestion analysed | F1/F2 produced and the occupancy distribution characterised, **whatever it shows** (revised per ADR-008; the original gate presupposed its own answer) |
 | M2 Simulator | M6 + baselines E1–E3 | Baselines run on real slots, paired seeds |
 | M3 Forecast | P1 trained and evaluated | Beats E4 on chronological test split |
 | M4 Policy | P2 constrained optimizer | Zero Gate A violations |
@@ -166,7 +201,7 @@ M7 is droppable without weakening the core claim. The result lives in the simula
 
 | # | Question | Needed by | Default if unresolved |
 |---|---|---|---|
-| Q1 | Can per-block execution units be collected at 90-day scale within free tiers? | M1 | Size-only D1 plus a 7-day ExUnit sample (`adr/ADR-005`) |
+| ~~Q1~~ **answered** | Can per-block execution units be collected at 90-day scale within free tiers? | M1 | **No — and the fallback holds.** Two 2-day samples (17,280 blocks) give a size↔execution correlation of 0.912 in the congested regime, 0.852 pooled; steps never exceed 49.9 % of the block budget. Size fill is the primary signal, the forecaster trains on all 92 days. `adr/ADR-005` §Result |
 | Q2 | DQN or PPO for P3? | M5 | DQN with action masking — discrete action space |
 | Q3 | Is the optional dashboard built? | M7 | No; terminal logs and plots suffice |
 | Q4 | Exact order-arrival process for D2 | M2 | Poisson with diurnal intensity fitted to D1 tx counts |

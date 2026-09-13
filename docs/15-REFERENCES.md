@@ -100,7 +100,7 @@ Not academic papers, but load-bearing for specific factual claims. Cite them whe
 | Aiken language documentation — https://aiken-lang.org | The optional on-chain layer |
 | Koios API documentation — https://api.koios.rest | D1 collection |
 | Blockfrost API documentation — https://docs.blockfrost.io | Fallback collection and submission |
-| Input Output statements on block capacity | The 80–90 % peak congestion figure |
+| Input Output statements on block capacity | Source of the 80–90 % peak congestion figure. **Cite with the contradiction, not as support**: this project's own measurement of 90 days of mainnet finds a 2.6 % median fill and 0.13 % of blocks above 80 %. The figure may describe a past regime or a different definition of capacity; either way the claim entered this project unsourced and was corrected by measurement (`adr/ADR-008`) |
 
 ---
 

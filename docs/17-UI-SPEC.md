@@ -323,7 +323,7 @@ No figure uses two y-scales. Where two measures of different scale must be compa
 | **Marks** | 2px line, sequential blue `#2a78d6`; 80–90 % band as a recessive fill, annotated *inclusion-risk band* |
 | **Annotation** | Label the band in place. Mark one peak episode with its date |
 | **Expected shape** | Diurnal oscillation with excursions into and above the band |
-| **The sentence it earns** | "Cardano blocks reach 80–90 % capacity during peak periods — here is when, and how often." |
+| **The sentence it earns** | "Here is how full Cardano blocks actually run, and how often capacity binds." *(Revised per ADR-008. The original — "blocks reach 80–90 % capacity during peak periods" — assumed the answer the figure was built to measure, and the measurement contradicted it.)* |
 | **Failure signature** | Fill never approaches the band → the premise is weaker than assumed and the report must say so |
 
 Single series → no legend. This is the first figure in the results chapter, because everything after it assumes the problem exists.

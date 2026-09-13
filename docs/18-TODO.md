@@ -2,7 +2,16 @@
 
 Execution checklist for the whole project. Every task traces to a specification document, states its deliverable as a file path, and states the condition under which it may be ticked.
 
-**Status at time of writing:** specification complete (docs 01–17, ADR 001–007); `src/` does not exist; no code written.
+**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–3 complete.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen. **201 tests green.** Phase 4 (constrained optimizer P2) is next — the point at which the project has a defensible result.
+
+**Phase 1 outcomes:** the congestion premise did not survive measurement and the project was reframed around concurrency (`adr/ADR-008`); R4 fired and its fallback was taken; R1 fired, was diagnosed and closed; R13 was opened and absorbed.
+
+**Open items carried forward** *(none block Phase 4)*
+
+1. **The cost model is internally inconsistent.** `07-CONSTRAINTS-COST-MODEL.md` §4's Gate A arithmetic implies a pool-validator cost putting the flat fee at ~0.35 ADA, while §5's table implies ~0.24 ADA. `build/estimator.py` follows §4, the Gate A source.
+2. **The fee formula is missing a Conway-era term.** V4 (X-4) shows it under-estimates script-bearing transactions by ~29 %, and a batch transaction is script-bearing. Absolute costs are low; comparisons are unaffected. P7-9 recalibrates from measurement and should settle both 1 and 2 together.
+3. **`D_MAX` bounds the decision, not the wait.** G4 and I2 are worded as though it bounds how long an order waits; measured overshoot is up to 114 slots. The code is right and tested; the prose needs correcting when Chapter 4 is written.
+4. **The `Doc/` artifacts still carry the old framing** — X-1 and X-2, now the largest documentation debt because of ADR-008.
 
 ---
 
@@ -24,15 +33,33 @@ Execution checklist for the whole project. Every task traces to a specification 
 
 | Phase | Tasks | Done | Exit gate met | Review |
 |---|---|---|---|---|
-| 0 · Foundation | 12 | 0 | ☐ | — |
-| 1 · Data and premise | 16 | 0 | ☐ | Review 1 |
-| 2 · Simulator and baselines | 18 | 0 | ☐ | Review 2 |
-| 3 · Forecaster | 12 | 0 | ☐ | Review 2 |
+| 0 · Foundation | 12 | 12 | ☑ | — |
+| 1 · Data and premise | 16 | 16 | ☑ | Review 1 |
+| 2 · Simulator and baselines | 18 | 18 | ☑ | Review 2 |
+| 3 · Forecaster | 12 | 11 + 1 cut | ☑ | Review 2 |
 | 4 · Optimizer P2 | 11 | 0 | ☐ | Review 2 |
 | 5 · RL agent P3 | 13 | 0 | ☐ | Review 3 |
 | 6 · Evaluation and write-up | 17 | 0 | ☐ | Review 3 |
 | 7 · On-chain demo `[opt]` | 12 | 0 | ☐ | Review 3 |
-| X · Cross-cutting | 14 | 0 | — | all |
+| X · Cross-cutting | 14 | 6 | — | all |
+
+**Cross-cutting detail** — done: X-4 (fee replay), X-5 (coverage, CI-enforced),
+X-7, X-8, X-9, X-12. On track and recurring: X-3, X-6 (5 of 6 guards exist; the
+sixth is T-O5 in Phase 7). Not started: X-1, X-2 (both `Doc/` rewrites, now larger
+because of ADR-008), X-10 (Phase 5), X-11 (Phase 7), X-13, X-14.
+
+### Artifacts produced so far
+
+| Path | What |
+|---|---|
+| `data/processed/d1_blocks_20260613_20260913.parquet` | D1 — 388,781 blocks, 92 days *(gitignored; checksum committed)* |
+| `data/processed/*.sha256`, `manifest.json` | Dataset provenance |
+| `experiments/phase1-predictability/` | The R4 gate numbers and written decision |
+| `experiments/phase2-tuning/` | E1/E2 sweeps; selected M=16, T=20 |
+| `experiments/phase2-baselines/` | Per-episode metrics, 3 arrival rates |
+| `experiments/phase2-fee-replay/` | V4 against 200 real transactions |
+| `experiments/phase3-forecaster/` | Scores, leakage check, frozen LightGBM |
+| `figures/F1…F4`, `tables/` | Report figures, script-generated |
 
 ---
 
@@ -101,10 +128,10 @@ Keep the root `README.md` status line and `docs/README.md` §Status honest as ph
 **Done when** — the status table reflects reality at every phase gate. Re-tick each phase.
 
 ### ✅ Phase 0 exit gate
-- [ ] T-C1, T-C2, T-C3 pass
-- [ ] CI green
-- [ ] Manifest writer exists and is called by at least one script
-- [ ] `pytest -m "not slow"` under 30 s
+- [x] T-C1, T-C2, T-C3 pass
+- [x] CI green — `.github/workflows/ci.yml`; verified locally (`ruff check`, `pytest -m "not slow"`)
+- [x] Manifest writer exists and is called by at least one script — `scripts/verify_setup.py`
+- [x] `pytest -m "not slow"` under 30 s — 27 tests, ~7 s, 95 % coverage on the modules written so far
 
 ---
 
@@ -135,8 +162,9 @@ Expect ~390,000 rows, ~12 MB parquet, a few hours under rate limiting.
 **Done when** — no gaps in `block_height`; `abs_slot` strictly increasing; a re-run is byte-identical.
 **Watch** — R7 (free-tier limits). Spread across days if needed; it is resumable by design.
 
-### P1-6 · Collect the 7-day execution-unit sample
-Per-transaction fetch over a 7-day window, summing redeemer `unit_mem` / `unit_steps` per block. Set `exunits_source = "per_tx"`.
+### P1-6 · Collect the execution-unit sample — **2 days, amended from 7**
+Per-transaction fetch over the newest 2 days, summing redeemer `unit_mem` / `unit_steps` per block. Set `exunits_source = "per_tx"`.
+Window narrowed from 7 days to 2 by team decision; rationale, measured API limits and the cost recorded in `adr/ADR-005` §Amendment. The report must state the window as two days.
 **Done when** — the sampled window is complete and `mem_pct` / `step_pct` are populated only there.
 
 ### P1-7 · Dataset verifier
@@ -187,17 +215,56 @@ Compute and write up in `experiments/phase1-predictability/`:
 
 **Done when** — all five numbers are recorded with the code that produced them, and the team has made an explicit written decision.
 
+> **Written decision, 2026-09-13 — full window, 388,781 blocks / 92 days, `sha256 48cd6f8b9a9e`.**
+> Recorded in full in `adr/ADR-008`.
+>
+> | Number | Value |
+> |---|---|
+> | Autocorrelation, lag 1 / 5 / 20 | 0.3724 / 0.3216 / 0.2723 |
+> | MAE, lag-1 persistence | 0.06069 |
+> | MAE, global mean | 0.06065 |
+> | MAE, rolling mean k=20 | **0.05157** (15.0 % better than the global mean) |
+> | Size ↔ execution correlation | **0.912 congested / 0.588 quiet / 0.852 pooled** — R1 closed, `adr/ADR-005` §Result |
+>
+> **Decision.** Take the R4 fallback, with the qualification that the series is not
+> structureless: a rolling mean beats the global mean by 15 % and autocorrelation
+> persists to lag 20 at 0.27. Lag-1 persistence loses because it copies spikes
+> forward and is penalised twice under MAE on a right-skewed series. Phase 3
+> reduces to E4 plus LightGBM; the LSTM is cut on scope grounds, not on
+> unpredictability grounds. S1 (P1 beating E4) stays open.
+>
+> **The larger finding.** Congestion is rare and **never sustained** — median fill
+> 2.95 %, 0.564 % of blocks above 80 %, 2,193 congested blocks in 1,679 separate
+> episodes, longest unbroken run 10 blocks (5 minutes), no run reaching 50. It
+> concentrates into busy days (64 % in the busiest five of 93) but even the busiest
+> day runs only 11.2 % of its blocks above 80 %. The project is reframed from
+> congestion to concurrency: `adr/ADR-008`, risk R13. Objective, goals and
+> non-goals are unchanged.
+>
+> **The proxy.** Size fill is a valid stand-in for execution fill and the
+> forecaster trains on the full 92 days. The first sample failed the 0.7 threshold
+> at 0.588 — taken from the quietest two days, where half the blocks run no
+> scripts and nothing approaches a limit. A second sample aimed at the busiest day
+> gives 0.912. Both are reported; see `adr/ADR-005` §Result, including its stated
+> threat to validity.
+>
+> **Carried into Phase 2:** the paired-episode set (P2-14) must deliberately
+> include congested days, or uniform sampling will describe an empty chain only.
+> Gate B may also be evaluated on size alone: execution steps never exceeded 49.9 %
+> of the block budget in 17,280 sampled blocks, and memory bound without size in
+> exactly one.
+
 **Decision rule** (`12-ROADMAP.md` Phase 1, risk R4):
 - lag-1 clearly beats global-mean → congestion is predictable; proceed to Phase 3 as specified.
 - lag-1 barely beats global-mean → **take the R4 fallback**: pivot to queue-aware batching, report the negative forecasting result as a genuine finding about Cardano block dynamics, and reduce Phase 3 to E4 plus one model.
 - size↔execution correlation on the sample **below 0.7** → size fill is not a valid proxy (R1 trigger); restrict the forecaster to the sampled window and state it in the report.
 
 ### ✅ Phase 1 exit gate
-- [ ] No gaps in `block_height`; `abs_slot` strictly increasing; re-run byte-identical
-- [ ] F1 produced, showing the 80–90 % band
-- [ ] Predictability answered in writing, decision recorded
-- [ ] T-N1, T-N2, T-N3, T-I4 pass
-- [ ] Risk register updated (R1, R4, R7)
+- [x] No gaps in `block_height`; `abs_slot` strictly increasing; re-run byte-identical — 388,781 rows verified, `sha256 48cd6f8b9a9e`; window pinnable via `--start-height/--end-height`
+- [x] F1 produced — showing the band is **reached by 0.564 % of blocks and never sustained**, which is the honest answer to the question F1 asks
+- [x] Predictability answered in writing, decision recorded — `adr/ADR-008`, roadmap Phase 1, P1-16 above
+- [x] T-N1, T-N2, T-N3, T-I4 pass — 108 tests green
+- [x] Risk register updated — R1 closed, R4 fired and absorbed, R13 opened, R7 not realised
 
 **→ Review 1 material:** F1, F2, the congestion band numbers, the predictability finding. A data story, not a demo.
 
@@ -287,10 +354,17 @@ Sweep `M` and `T`, select on validation only, record the tuned values in the man
 **Done when** — tuned values are recorded. An untuned baseline is a straw man and invalidates the entire comparison.
 
 ### ✅ Phase 2 exit gate
-- [ ] T-S1 … T-S6 pass, **especially T-S3**
-- [ ] T-P3 conservation holds
-- [ ] E1 and E2 tuned on validation, values recorded
-- [ ] V4 fee replay complete or scheduled (X-4)
+- [x] T-S1 … T-S6 pass, **especially T-S3** — greedy gives the lowest latency and highest per-user cost in unit tests *and* on real replayed D1 at all three arrival rates
+- [x] T-P3 conservation holds — asserted per episode in `scripts/evaluate.py`, so a leak fails the run rather than the suite alone
+- [x] E1 and E2 tuned on validation, values recorded — **E1 M=16, E2 T=20**, selected on L-p95; sweeps in `experiments/phase2-tuning/sweeps.json`
+- [x] V4 fee replay complete (X-4) — formula never exceeds the actual fee on 200 recorded transactions; a ~29 % systematic under-estimate on script-bearing transactions is recorded there
+
+**Three defects found in Phase 2, all regression-tested:**
+1. **Order conservation leaked.** The queue had an admission cap, so orders arriving at a full queue vanished from the in == settled + expired + queued identity. The cap was also wrong modelling — an order is a UTXO already on chain, and a batcher has no mechanism to refuse one. The queue is now unbounded and `QUEUE_CAP` is documented as an RL normalisation constant only.
+2. **The arrival process ran 4.5× hot.** A per-block burst probability of 0.02 with hour-long bursts put the stream in burst ~78 % of the time, so 13.6 orders/block arrived where 3.0 were configured. E1 appeared to fail catastrophically at small `M` (68 % expiry) — a modelling artefact, not a policy result. Bursts are now expressed as onsets per day.
+3. **D3 logged post-action queue depth**, so every SUBMIT row read as though it had decided on an empty queue, silently defeating the I2 deadline assertion. It now records what the policy saw.
+
+**Specification gap to carry into the report.** I2 and goal G4 read as though `D_MAX` bounds how long an order waits. It does not: it bounds the *decision*. A decision exists only when a block arrives and the pool is free, so an order can pass `D_MAX` and wait until the next such moment — measured overshoot up to **114 slots**. The invariant that actually holds, and is now tested, is that **no decision opportunity past the deadline results in WAIT**. Report the bound as `D_MAX` + one decision gap.
 
 ---
 
@@ -313,7 +387,13 @@ Implement the `Forecast` dataclass from `04-MODULE-SPECS.md` M2: `fill_hat` for 
 `src/batcher/forecast/lgbm.py`: ~500 trees, early stopping on validation MAE, feature set from `06-ML-SPEC.md` §3.
 **Done when** — trains in under 5 min on CPU and inference is under 10 ms per call (NFR-1).
 
-### P3-4 · P1b LSTM `[opt — cut #2]`
+### P3-4 · P1b LSTM `[opt — CUT]`
+**Cut**, per the Phase 1 decision recorded in `12-ROADMAP.md`. The grounds are
+scope, not unpredictability: the forecaster's *policy* leverage is limited because
+Gate B binds about once in 180 blocks, so a second deep variant cannot earn its
+place. Phase 3 reports E4 plus LightGBM. Original task retained below for the record.
+
+### ~~P3-4 · P1b LSTM~~ `[cut #2]`
 `src/batcher/forecast/lstm.py`: 2 layers, 64 hidden, sequence length 20, Adam. Under 45 min on CPU.
 **Done when** — trained and evaluated. **Report the result whether or not it beats LightGBM.** A negative result honestly reported is stronger than a tuned-until-it-wins result.
 
@@ -348,9 +428,43 @@ Once selected on validation, freeze the forecaster. P3 consumes its output as st
 **Done when** — a written record exists of when the test split was used and for what. Every tuning decision happened on validation.
 
 ### ✅ Phase 3 exit gate
-- [ ] T-I4, T-N3, T-L1 pass — no leakage at split or feature level
-- [ ] S1 measured and reported, pass or fail
-- [ ] F4 produced
+- [x] T-I4, T-N3, T-L1 pass — no leakage at split or feature level
+- [x] S1 measured and reported — **PASS, +11.2 %**
+- [x] F4 produced — and it reports the failure signature, see below
+
+**Results (test split, 58,316 rows, touched once):**
+
+| Model | MAE | RMSE | DIR |
+|---|---|---|---|
+| **P1a LightGBM** | **0.04578** | 0.08364 | **0.742** |
+| E4 moving average | 0.05157 | **0.08355** | 0.710 |
+| Global mean | 0.06065 | 0.08867 | 0.662 |
+| Lag-1 persistence | 0.06069 | 0.10044 | 0.000 |
+
+S1 passes on MAE (+11.2 %) and on directional accuracy (+3.1 points). It does
+**not** win on RMSE — E4 is a hair better there, which follows from training on an
+L1 objective and is reported rather than hidden.
+
+⚠ **The S1 pass does not mean what it appears to mean.** F4's anticipation
+diagnostic: the forecast correlates **0.399** with the value it predicts and
+**0.616** with the value before it. It is a smoothed lag — the failure signature
+`17-UI-SPEC.md` F4 names. Visually, the forecast never once enters the 80–90 %
+band across the test window while the actual reaches 100 % repeatedly.
+
+**What the model actually learned** is the slowly varying *level* of congestion,
+and it exploits mean reversion around that level — which is where the MAE and DIR
+gains come from. It cannot anticipate spikes, and spikes are the only thing Gate B
+cares about. So the practical value of the forecaster to the *policy* is close to
+zero, which is precisely what ADR-008 predicted when it demoted the forecaster to
+a secondary input. Ablation A2 (P2 on E4 vs P2 on P1) will quantify it; expect
+little difference, and report that.
+
+**T-L1 note.** The first implementation of the leakage check compared MAEs
+computed on *different rows* — the chronological test window against a random
+15 % — and declared the pipeline "LEAKING". Periods differ in intrinsic
+difficulty, so that comparison measured which window was easier. Rebuilt to score
+both models on identical rows: leaking then helps by +2.6 %, and the verdict is
+clean.
 
 ---
 
@@ -643,6 +757,7 @@ Not owned by a single phase. Several must happen before their phase, not after.
 
 ### X-1 · ⚠ Correct the three errors in `Doc/` before resubmission
 `docs/README.md` §Authority names exactly three:
+- [ ] **The congestion framing throughout** — abstract, decks and `Doc/` all motivate the work by 80–90 % block occupancy. Measured median fill is **2.95 %**, with 0.56 % of blocks above 80 % and no run longer than 10 blocks. Reframe to concurrency per ADR-008; this is now the largest of the corrections, not the smallest.
 - [ ] **Deck slide 13** — the optimizer formula `capacity ← (1 − fill_hat) × 90,112` sizes batches against *block* limits. Replace it with the Gate A / Gate B distinction (ADR-002).
 - [ ] **Deck slide 15** — the execution-unit footnote: correct the per-block step budget from 20 G to **40 G**, and note the sampled-collection decision (ADR-005).
 - [ ] **`Doc/team-11-abstract.docx`** — the batch-sizing sentence currently describes sizing against block capacity. Rewrite it per ADR-002, and add the F2 ">80 % of blocks" number once P1-14 produces it.
@@ -653,44 +768,77 @@ Not owned by a single phase. Several must happen before their phase, not after.
 The existing decks cover Reviews 1 and 2 and need updating only where they conflict: the "bounce penalty" failure model (→ pool-lock head-of-line blocking) and the fixed-tick simulator (→ recorded slot clock).
 **Done when** — no deck slide contradicts an ADR.
 
-### X-3 · Keep the risk register live *(recurring)*
+### X-3 · Keep the risk register live *(recurring)* — on track
 Update `11-RISK-REGISTER.md` §Review log at **every** milestone gate — R1, R2, R3, R4, R5, R6 and R7 all have concrete triggers that fire during this project.
-**Done when** — the log has a dated row per phase.
+**Done when** — the log has a dated row per phase. Rows exist for Phase 1 and for Phases 2–3; R1 closed, R4 fired, R13 opened. Add a row at each remaining gate.
 
-### X-4 · V4 fee replay without waiting for Phase 7
+### X-4 · V4 fee replay without waiting for Phase 7 ✅
 The fee replay can run against **recorded mainnet transactions** collected during Phase 1, not only against preprod submissions. Do it early — it validates the fee model independently of the simulator.
-**Done when** — **T-F6** passes on 100 recorded transactions.
+**Done when** — **T-F6** passes on 100 recorded transactions. ✅ `scripts/fee_replay.py`, 200 transactions, `experiments/phase2-fee-replay/`.
 
-### X-5 · Coverage target
+**Result: the invariant holds, and a real gap was found.**
+
+| | Simple (n=161) | Script-bearing (n=39) |
+|---|---|---|
+| Formula ever exceeds actual | **never** (200/200) | **never** |
+| Exact minimum-fee matches | 13 | 0 |
+| Median under-estimate | **+0.39 %** | **+29.16 %** |
+| 95th percentile | +34.37 % | +51.16 % |
+
+The formula computes the protocol *minimum*, and a transaction may pay more, so
+``estimate <= actual`` is the correct invariant and it held on every transaction.
+For simple transactions the median residual is 0.39 % — the model is essentially
+exact.
+
+⚠ **Script-bearing transactions are under-estimated by ~29 % systematically.**
+That is not noise; it is almost certainly the Conway-era reference-script
+surcharge (`minFeeRefScriptCostPerByte`), which the formula in
+`07-CONSTRAINTS-COST-MODEL.md` §5 predates. **A DEX batch transaction is
+script-bearing**, so the project's absolute per-user cost figures are understated.
+
+*What this does and does not affect.* Policy **comparisons** are unaffected —
+every policy is priced by the same estimator, so the ranking and the Pareto shape
+stand. Absolute C-user values, and the ADA figures on F3, are low. The missing
+term is charged per transaction, so it is a **flat** component: adding it would
+*strengthen* the amortization argument rather than weaken it. Fold it in at P7-9,
+which already recalibrates the cost model from measurement.
+
+### X-5 · Coverage target ✅
 90 % on `config/`, `build/estimator.py`, `policy/`, `sim/`, `eval/metrics.py`. Notebooks and plotting excluded.
-**Done when** — `pytest --cov=src/batcher --cov-report=term-missing` meets it and CI enforces it.
+**Done when** — `pytest --cov=src/batcher --cov-report=term-missing` meets it and CI enforces it. ✅ **96 % overall**, every listed module at or above target; CI fails below 90 % via `--cov-fail-under`.
 
 ### X-6 · Regression suite for the corrected assumptions
 Permanent guards so a future refactor cannot silently reintroduce an overturned assumption:
 
-| ADR | Guard | Task |
-|---|---|---|
-| 001 latency not fees | T-F3 — `fee()` takes no block state | P2-3 |
-| 002 tx limits not block limits | T-G5 — an empty block does not raise the Gate A cap | P2-4 |
-| 004 pool-lock failure model | T-S5, plus no "bounce" in the outcome enum | P2-7, P2-16 |
-| 005 sampled execution units | T-N1 — absent rows carry `"absent"`, never `0` | P1-3 |
-| 006 pass-through fee | T-O5 | P7-3 |
-| 007 real slot clock | T-S6 | P2-8 |
+| ADR | Guard | Status | Where |
+|---|---|---|---|
+| 001 latency not fees | `fee()` takes no block state — enforced on the whole module, not one function | ✅ | `tests/test_estimator.py::test_the_fee_function_cannot_see_congestion` |
+| 002 tx limits not block limits | T-G5 — an empty block does not raise the Gate A cap | ✅ | `tests/test_gates.py`, plus a test showing the deck-slide-13 formula *would* emit an invalid transaction |
+| 004 pool-lock failure model | T-S5 head-of-line blocking, and no "bounce" member in `Resolution` | ✅ | `tests/test_simulator.py` |
+| 005 sampled execution units | T-N1 — absent rows carry `"absent"`, never `0` | ✅ | `tests/test_collector.py` |
+| 006 pass-through fee | T-O5 | ☐ Phase 7 | — |
+| 007 real slot clock | T-S6 — duration matches recorded slots, not blocks × 20 s | ✅ | `tests/test_simulator.py` |
+| **008 concurrency not congestion** | T-S5 must hold with congestion held low, or the reframing is unsupported | ✅ | `tests/test_simulator.py` uses a congested fixture *and* the quiet one |
 
-**Done when** — all six exist and are marked in the source as ADR guards that must not be deleted.
+**Done when** — all six exist and are marked in the source as ADR guards that must not be deleted. **Five of seven live now**; T-O5 arrives with Phase 7, and ADR-008 added a row that did not exist when this table was written.
+
+**Two guards earned their keep already.** The ADR-001 module-wide scan fired when Gate B was added — correctly, since Gate B *is* congestion-dependent — and the fix was to scope the guard to the cost model rather than weaken it. The ADR-005 null-not-zero guard is the one that would have been most expensive to miss.
 **The ADR-005 guard matters most quietly**: representing absent execution units as `0` rather than null would make blocks look empty and would corrupt every downstream congestion statistic.
 
-### X-7 · Notebook discipline
+### X-7 · Notebook discipline ✅ *(holding)*
 Notebooks are exploratory only. **No result reaches the report through a notebook.**
-**Done when** — every number and figure in the report is produced by a script under test.
+**Done when** — every number and figure in the report is produced by a script under test. ✅ No notebook exists; every figure and number so far comes from `scripts/analyze_congestion.py`, `train_forecaster.py`, `tune_baselines.py`, `evaluate.py` or `fee_replay.py`.
 
-### X-8 · Housekeeping policy
+### X-8 · Housekeeping policy ✅ *(holding)*
 Committed: checksums, manifests, `experiments/<id>/`, figures, tables. Gitignored: `data/`, model checkpoints.
-**Done when** — the policy in `13-RUNBOOK.md` §9 is enforced by `.gitignore` and observed in practice.
+**Done when** — the policy in `13-RUNBOOK.md` §9 is enforced by `.gitignore` and observed in practice. ✅ `git status` stays clean through a full collection, training and evaluation run.
 
-### X-9 · Resolve open question Q1 — execution units at scale
-Answered in Phase 1 by P1-6 and the correlation in P1-16.
-**Done when** — recorded in `01-PRD.md` §8 with the outcome.
+### X-9 · Resolve open question Q1 — execution units at scale ✅
+Answered in Phase 1 by P1-6 and the correlation in P1-16. **Outcome:** per-block
+execution units cannot be collected at 90-day scale, as ADR-005 predicted, but the
+sampled proxy holds — 0.912 in the congested regime, 0.852 pooled. Size fill is the
+primary signal and the forecaster trains on the full window.
+**Done when** — recorded in `01-PRD.md` §8 with the outcome. ✅
 
 ### X-10 · Resolve open question Q2 — DQN or PPO
 **Done when** — decided in Phase 5 and recorded. Default: DQN with action masking.
@@ -698,8 +846,8 @@ Answered in Phase 1 by P1-6 and the correlation in P1-16.
 ### X-11 · Resolve open question Q3 — is the dashboard built?
 **Done when** — decided at Phase 7 and recorded. Default: no; terminal logs and plots suffice.
 
-### X-12 · Resolve open question Q4 — the order arrival process
-**Done when** — the fitted diurnal shape from P2-5 is documented in `05-DATA-SPEC.md` §D2 with its parameters.
+### X-12 · Resolve open question Q4 — the order arrival process ✅
+**Done when** — the fitted diurnal shape from P2-5 is documented in `05-DATA-SPEC.md` §D2 with its parameters. ✅ Recorded there, including the burst parameterisation and the 4.5x over-arrival defect that made it necessary.
 
 ### X-13 · Watch R11 — Leios
 Position the work as a complementary application-layer optimization **from the outset**, in the PRD and the report introduction, not defensively at the review. Block capacity limits and single-UTXO pool concurrency do not disappear at higher throughput.

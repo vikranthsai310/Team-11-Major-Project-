@@ -1,0 +1,47 @@
+# --- Key material and secrets (NFR-6, NFR-7) ---
+*.skey
+*.vkey
+*.mnemonic
+*.addr
+.env
+.env.*
+!.env.example
+
+# --- Datasets: contents are gitignored, provenance is committed (X-8) ---
+data/raw/
+data/processed/*
+!data/processed/*.sha256
+!data/processed/manifest.json
+!data/processed/.gitkeep
+
+# --- Model checkpoints ---
+*.ckpt
+*.pt
+*.pth
+*.zip
+*.txt.model
+experiments/*/models/
+
+# --- Python ---
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# --- Editors and OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# --- Notebooks ---
+.ipynb_checkpoints/
