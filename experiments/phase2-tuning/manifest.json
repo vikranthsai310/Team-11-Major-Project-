@@ -1,14 +1,20 @@
 {
   "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
-  "created_utc": "2026-09-13T14:20:37+00:00",
+  "created_utc": "2026-09-13T15:27:00+00:00",
   "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
   "episodes": 8,
   "experiment_id": "phase2-tuning",
+  "forecaster": "lgbm",
   "git": {
     "dirty": true,
-    "sha": "2b82e6465176112d6ac71967b3647da619eea517"
+    "sha": "81892e988949b53368c0f38d3008c1a037144c5d"
   },
   "grids": {
+    "D_MAX": [
+      60,
+      120,
+      240
+    ],
     "M": [
       4,
       8,
@@ -18,6 +24,13 @@
       25,
       30,
       40
+    ],
+    "N_MIN": [
+      1,
+      4,
+      8,
+      12,
+      20
     ],
     "T": [
       20,
@@ -76,6 +89,10 @@
     "e2": {
       "l_p95": 135.0,
       "policy": "e2(T=20)"
+    },
+    "p2": {
+      "l_p95": 121.5,
+      "policy": "p2(D=60,N=1)"
     }
   }
 }

@@ -73,6 +73,6 @@ Where this documentation conflicts with the earlier artifacts in `Doc/` (abstrac
 |---|---|
 | Specification | Complete — documents 01–17 |
 | Decision records | Complete — ADR 001–007 |
-| Implementation | Phases 0–3 complete; Phase 4 next — see `18-TODO.md` |
+| Implementation | Phases 0–4 complete; Phase 5 next — see `18-TODO.md` |
 | Report chapters 1–5 | Assemblable from these documents today |
 | Report chapters 6–8 | Await implementation and results |

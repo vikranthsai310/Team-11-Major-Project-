@@ -66,7 +66,7 @@ experiments/  run manifests and results
 
 ## Status
 
-Phases 0–3 complete: foundation, data collection and premise validation, simulator and tuned baselines, congestion forecaster. 201 tests. Phase 4 (the constrained optimizer) is next. Task-level checklist: [`docs/18-TODO.md`](docs/18-TODO.md), derived from [`docs/12-ROADMAP.md`](docs/12-ROADMAP.md).
+Phases 0–4 complete: foundation, data collection and premise validation, simulator and tuned baselines, congestion forecaster, and the constrained optimizer. 224 tests. The project has a defensible result; Phase 5 (RL) is an upgrade. Task-level checklist: [`docs/18-TODO.md`](docs/18-TODO.md), derived from [`docs/12-ROADMAP.md`](docs/12-ROADMAP.md).
 
 D1 is collected and verified — 388,781 blocks over 92 days — and the simulator replays it against tuned static baselines with zero Gate A violations.
 

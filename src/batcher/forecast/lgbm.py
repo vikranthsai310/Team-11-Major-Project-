@@ -75,6 +75,19 @@ class LightGBMForecaster:
         if not self.models:
             raise RuntimeError("forecaster is not fitted")
 
+        # Two very different situations look alike here, and conflating them cost
+        # a full evaluation run: a frame that was never passed through
+        # build_features has *no* feature columns and silently degraded to the
+        # moving average for every row, so "P2 on LightGBM" was really P2 on E4.
+        # A missing column is a caller error and is loud; NaNs within present
+        # columns are the legitimate window-start case and stay silent.
+        missing = [column for column in self.features if column not in frame.columns]
+        if missing:
+            raise KeyError(
+                f"frame is missing {len(missing)} feature column(s) this forecaster needs "
+                f"(e.g. {missing[:3]}). Pass it through batcher.data.features.build_features."
+            )
+
         # A window can begin before its rolling features are complete. Those rows
         # get the moving-average value rather than a prediction from NaNs.
         features = frame.reindex(columns=self.features)

@@ -169,6 +169,36 @@ def test_a_saved_forecaster_round_trips(tmp_path):
     )
 
 
+def test_a_frame_without_features_is_rejected_loudly():
+    """The defect this guards against cost a whole evaluation run.
+
+    `evaluate.py` passed a frame that had never been through `build_features`.
+    Every row's features were absent, so the model degraded to the moving average
+    for all of them while still calling itself "lgbm" — and P2-on-LightGBM was
+    silently P2-on-E4. A missing *column* is a caller error and must raise; NaNs
+    inside present columns remain the silent, legitimate case.
+    """
+    data = autocorrelated(seed=11)
+    model = LightGBMForecaster(horizon=1).fit(data.iloc[:900])
+
+    featureless = data[["abs_slot", "block_time", "fill_pct", "tx_count", "slot_gap", "segment"]]
+    with pytest.raises(KeyError, match="build_features"):
+        model.predict_frame(featureless)
+
+
+def test_a_real_model_varies_across_the_horizon():
+    """The moving average repeats one value; a fallback is detectable this way."""
+    data = autocorrelated(seed=12)
+    model = LightGBMForecaster(horizon=3).fit(data.iloc[:1000])
+    predictions = model.predict_frame(data.iloc[1000:])
+
+    assert not np.allclose(predictions[:, 0], predictions[:, 1])
+    assert np.allclose(
+        MovingAverage(horizon=3).predict_frame(data)[:, 0],
+        MovingAverage(horizon=3).predict_frame(data)[:, 1],
+    )
+
+
 def test_rows_with_incomplete_features_get_the_moving_average(frame):
     """A window can start before its rolling features are complete."""
     data = autocorrelated(seed=7)

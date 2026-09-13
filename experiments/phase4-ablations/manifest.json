@@ -1,0 +1,134 @@
+{
+  "a2": [
+    {
+      "d_c_user": 0.0,
+      "d_l_p95": 0.0,
+      "n_min": 1
+    },
+    {
+      "d_c_user": -32970.11628323031,
+      "d_l_p95": 7.0,
+      "n_min": 4
+    },
+    {
+      "d_c_user": -46834.99999374882,
+      "d_l_p95": 22.0,
+      "n_min": 8
+    },
+    {
+      "d_c_user": -51563.02639889688,
+      "d_l_p95": 36.024999999999636,
+      "n_min": 12
+    },
+    {
+      "d_c_user": -53518.58084793569,
+      "d_l_p95": 44.94999999999982,
+      "n_min": 20
+    }
+  ],
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "created_utc": "2026-09-13T15:36:00+00:00",
+  "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "episodes": 10,
+  "experiment_id": "phase4-ablations",
+  "forecaster_used": "lgbm",
+  "git": {
+    "dirty": true,
+    "sha": "81892e988949b53368c0f38d3008c1a037144c5d"
+  },
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "pareto_front": [
+    {
+      "c_user": 160421.4019140821,
+      "forecaster": "oracle",
+      "l_p95": 120.0,
+      "policy": "p2(N=1)"
+    },
+    {
+      "c_user": 126330.47340215344,
+      "forecaster": "oracle",
+      "l_p95": 126.0,
+      "policy": "p2(N=4)"
+    },
+    {
+      "c_user": 112830.95071083558,
+      "forecaster": "oracle",
+      "l_p95": 134.0,
+      "policy": "p2(N=8)"
+    },
+    {
+      "c_user": 107801.89296073426,
+      "forecaster": "oracle",
+      "l_p95": 143.0,
+      "policy": "p2(N=12)"
+    },
+    {
+      "c_user": 105878.47754618202,
+      "forecaster": "oracle",
+      "l_p95": 151.0,
+      "policy": "p2(N=20)"
+    },
+    {
+      "c_user": 82985.81071009215,
+      "forecaster": "\u2014",
+      "l_p95": 181.5,
+      "policy": "e1(M=16)"
+    },
+    {
+      "c_user": 79595.6265388653,
+      "forecaster": "\u2014",
+      "l_p95": 189.5,
+      "policy": "null"
+    }
+  ],
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "rate": "matched",
+  "s5": {
+    "p2_dominated_by_a_static": [],
+    "p2_dominates_a_static": [
+      "p2(N=4) > e2(T=20)"
+    ],
+    "p2_points_on_joint_frontier": [
+      "p2(N=1)",
+      "p2(N=12)",
+      "p2(N=20)",
+      "p2(N=4)",
+      "p2(N=8)"
+    ],
+    "verdict": "PASS"
+  },
+  "seed": 42,
+  "split": "val"
+}

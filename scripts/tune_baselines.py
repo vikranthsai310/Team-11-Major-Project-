@@ -19,9 +19,13 @@ import pandas as pd
 
 from batcher.config.params import DEFAULT_SEED
 from batcher.data.collector import sha256_of
-from batcher.data.features import chronological_split, preprocess
+from batcher.data.features import build_features, chronological_split, preprocess
 from batcher.eval import metrics
 from batcher.eval.manifest import write_manifest
+from batcher.forecast.base import CachedForecaster
+from batcher.forecast.baseline import MovingAverage
+from batcher.forecast.lgbm import load as lgbm_load
+from batcher.policy.optimizer import ConstrainedOptimizer
 from batcher.policy.static import FixedInterval, FixedSize
 from batcher.sim.env import run_episode
 from batcher.sim.episodes import build_episodes
@@ -30,22 +34,30 @@ from batcher.sim.orders import fit_arrival_process
 M_GRID = [4, 8, 12, 16, 20, 25, 30, 40]
 T_GRID = [20, 40, 60, 90, 120, 180, 240, 360]
 
+# P2's own knobs (P4-2). N_MIN starts from the amortization-curve knee near
+# n ~ 10 rather than from a guess (docs/07 §5); the grid spans either side of it.
+D_MAX_GRID = [60, 120, 240]
+N_MIN_GRID = [1, 4, 8, 12, 20]
+
 # L-p95 is the headline metric: mean latency can be improved by favouring easy
 # periods, while the tail is where a badly timed batcher actually hurts users
 # (docs/09-EVALUATION-PROTOCOL.md §2).
 SELECTION_METRIC = "l_p95"
 
 
-def score(frame, episodes, policy, process, rate: str) -> dict:
+def score(frame, episodes, policy, process, rate: str, forecaster=None) -> dict:
     rows = []
     for episode in episodes:
         if hasattr(policy, "reset"):
             policy.reset()
+        blocks = episode.blocks(frame)
+        prepared = CachedForecaster(forecaster).prepare(blocks) if forecaster else None
         result = run_episode(
-            episode.blocks(frame),
+            blocks,
             policy,
             episode.stream(process, rate),
             episode.rng(),
+            forecaster=prepared,
             episode_id=episode.episode_id,
             policy_name=policy.name,
         )
@@ -68,9 +80,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--episodes", type=int, default=10)
     parser.add_argument("--rate", default="matched")
     parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--models", type=Path, default=None, help="trained forecaster for P2")
     args = parser.parse_args(argv)
 
-    frame = preprocess(pd.read_parquet(args.data))
+    frame = build_features(preprocess(pd.read_parquet(args.data)))
     split = chronological_split(frame)
     process = fit_arrival_process(frame)
     episodes = build_episodes(frame, split, which="val", count=args.episodes, seed=args.seed)
@@ -78,9 +91,24 @@ def main(argv: list[str] | None = None) -> int:
     print(f"tuning on the VALIDATION split · {len(episodes)} episodes · rate {args.rate}")
     print(f"selection metric: {SELECTION_METRIC} (lower is better)\n")
 
+    forecaster = lgbm_load(args.models) if args.models else MovingAverage()
+    print(f"forecaster for P2: {forecaster.name}\n")
+
     sweeps = {
         "e1": [score(frame, episodes, FixedSize(m=m), process, args.rate) for m in M_GRID],
         "e2": [score(frame, episodes, FixedInterval(t=t), process, args.rate) for t in T_GRID],
+        "p2": [
+            score(
+                frame,
+                episodes,
+                ConstrainedOptimizer(d_max=d, n_min=n),
+                process,
+                args.rate,
+                forecaster,
+            )
+            for d in D_MAX_GRID
+            for n in N_MIN_GRID
+        ],
     }
 
     tuned = {}
@@ -104,7 +132,8 @@ def main(argv: list[str] | None = None) -> int:
         rate=args.rate,
         episodes=len(episodes),
         selection_metric=SELECTION_METRIC,
-        grids={"M": M_GRID, "T": T_GRID},
+        grids={"M": M_GRID, "T": T_GRID, "D_MAX": D_MAX_GRID, "N_MIN": N_MIN_GRID},
+        forecaster=forecaster.name,
         tuned=tuned,
     )
     (manifest.parent / "sweeps.json").write_text(json.dumps(sweeps, indent=2) + "\n")

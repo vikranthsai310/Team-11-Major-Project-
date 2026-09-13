@@ -2,7 +2,7 @@
 
 Execution checklist for the whole project. Every task traces to a specification document, states its deliverable as a file path, and states the condition under which it may be ticked.
 
-**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–3 complete.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen. **201 tests green.** Phase 4 (constrained optimizer P2) is next — the point at which the project has a defensible result.
+**Status:** specification complete (docs 01–18, ADR 001–008). **Phases 0–4 complete — the project has a defensible result.** D1 collected and verified: 388,781 blocks over 92 days, `sha256 48cd6f8b9a9e`, plus 17,280 blocks of execution-unit sampling across two regimes. Simulator validated, baselines tuned, forecaster trained and frozen, P2 evaluated against tuned baselines with zero Gate A violations. **224 tests green.** Phase 5 (RL agent) is next and is an upgrade, not a requirement.
 
 **Phase 1 outcomes:** the congestion premise did not survive measurement and the project was reframed around concurrency (`adr/ADR-008`); R4 fired and its fallback was taken; R1 fired, was diagnosed and closed; R13 was opened and absorbed.
 
@@ -37,7 +37,7 @@ Execution checklist for the whole project. Every task traces to a specification 
 | 1 · Data and premise | 16 | 16 | ☑ | Review 1 |
 | 2 · Simulator and baselines | 18 | 18 | ☑ | Review 2 |
 | 3 · Forecaster | 12 | 11 + 1 cut | ☑ | Review 2 |
-| 4 · Optimizer P2 | 11 | 0 | ☐ | Review 2 |
+| 4 · Optimizer P2 | 11 | 11 | ☑ | Review 2 |
 | 5 · RL agent P3 | 13 | 0 | ☐ | Review 3 |
 | 6 · Evaluation and write-up | 17 | 0 | ☐ | Review 3 |
 | 7 · On-chain demo `[opt]` | 12 | 0 | ☐ | Review 3 |
@@ -518,11 +518,72 @@ Produce the `09-EVALUATION-PROTOCOL.md` §6 main table for NULL, E1, E2, E3, P2 
 Record R2 and R5 status and the P2 result.
 **Done when** — `11-RISK-REGISTER.md` §Review log has a dated row. A register that is never updated is decoration.
 
+### Phase 4 results (validation split, matched rate, 10 paired episodes)
+
+**S2 · zero Gate A violations — PASS.** Zero across every policy, every arrival
+rate, every episode. Achieved by construction, not by training.
+
+**The L-p95 tuning rule selects a degenerate P2.** The sweep picks
+`p2(D=60,N=1)`, which is **byte-identical to greedy** on every metric at all
+three arrival rates. That is not a bug: with `N_MIN=1` the amortization-wait
+branch can never fire, and Gate B binds about once in 180 blocks, so nothing is
+left to decide. **On a chain where capacity does not bind, the latency-optimal
+batcher *is* greedy.** The rule was applied as documented and its output reported
+rather than the rule being changed after the fact — but the single selected point
+is not the informative artifact here. The frontier is.
+
+**The frontier (P2 on LightGBM, sweeping `N_MIN`):**
+
+| Policy | L-p95 | C-user | batch n | lock |
+|---|---|---|---|---|
+| p2(N=1) ≡ greedy | 120.0 | 160,439 | 3.4 | 0.69 |
+| **p2(N=4)** | **127.0** | **127,469** | 4.9 | 0.46 |
+| p2(N=8) | 142.0 | 113,604 | 6.1 | 0.37 |
+| p2(N=12) | 156.0 | 108,876 | 6.7 | 0.34 |
+| p2(N=20) | 165.0 | 106,920 | 7.0 | 0.32 |
+| e2(T=20) *tuned* | 133.0 | 131,593 | 4.7 | 0.50 |
+| e1(M=16) *tuned* | 181.5 | 82,986 | 13.2 | 0.17 |
+
+**S5 · Pareto — PASS, with the detail stated.** `p2(N=4)` dominates the tuned
+`e2(T=20)` on **both** axes (127.0 < 133.0 L-p95, and 127,469 < 131,593 C-user).
+No static baseline dominates any P2 point, and all five P2 points sit on the
+joint frontier. It does **not** dominate E3 or E1: those sit at opposite extremes
+of the trade-off, and no single point can dominate both ends of a frontier — so
+the strict reading of "dominates E1–E3" is unachievable by construction, and the
+claim reported is the one just stated.
+
+**A1 · what forecast error costs the policy.** P2 on LightGBM against P2 on the
+true next-block fill, at equal `N_MIN`:
+
+| N_MIN | L-p95 (P1) | L-p95 (oracle) | gap |
+|---|---|---|---|
+| 4 | 127.0 | 126.0 | 0.8 % |
+| 8 | 142.0 | 134.0 | 5.6 % |
+| 12 | 156.0 | 143.0 | 8.3 % |
+| 20 | 165.0 | 151.0 | 8.5 % |
+
+A perfect forecast is worth **5–9 % of tail latency** at equal cost, and the gap
+widens as the policy leans on the forecast more. That is the honest measure of
+forecast quality, and it is far more interpretable than the MAE.
+
+⚠ **A2 · confounded as specified, and reported that way.** P2 on E4 is
+**identical to greedy at every `N_MIN`**. E4 is a moving average, so its forecast
+is *flat across the horizon*; `quieter_block_predicted` compares later horizon
+steps against the next one and can therefore never fire. A2 as written compares
+a **horizon-varying forecast against a flat one**, not a strong forecast against
+a weak one. The measured differences (L-p95 +7 to +45 slots, C-user −33k to −54k
+lovelace) are real but answer the wrong question. To answer the intended one,
+A2 needs a naive baseline that varies across the horizon — recorded as an open
+item rather than quietly reinterpreted.
+
 ### ✅ Phase 4 exit gate
-- [ ] T-G1 … T-G5 pass, **especially T-G5**
-- [ ] S2: zero Gate A violations
-- [ ] P2 evaluated against all baselines at all three arrival rates
-- [ ] **Checkpoint: the project now has a defensible result.** Everything after this is an upgrade.
+- [x] T-G1 … T-G5 pass, **especially T-G5**
+- [x] S2: zero Gate A violations — across every policy, rate and episode
+- [x] P2 evaluated against all baselines at all three arrival rates
+- [x] **Checkpoint: the project now has a defensible result.** Everything after this is an upgrade.
+
+**Open item from this phase:** A2 needs a horizon-varying naive baseline to be
+meaningful (see above). It does not block Phase 5.
 
 **→ Review 2 material:** Chapter 5, simulator validation, forecaster beats baseline, P2 beats static batchers.
 
