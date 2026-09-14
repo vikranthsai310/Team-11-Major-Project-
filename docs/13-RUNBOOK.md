@@ -156,6 +156,31 @@ Apply the Phase 7 pre-authorised drop: three weeks without deployment means drop
 
 ## 7. Operating the live batcher (Phase 7)
 
+### 7.1 Deploying the DEX to preprod
+
+Every script below is a **dry run unless `--submit` is given**, and the settings
+guard refuses any network but preprod.
+
+| Step | Who | Command |
+|---|---|---|
+| 1. Build the validators | anyone | `cd onchain && aiken check && aiken build` |
+| 2. Blockfrost preprod project ID into `.env` | a team member | `BLOCKFROST_PROJECT_ID=...` — never committed |
+| 3. Keys, outside the repo | a team member | `python scripts/generate_keys.py --name batcher` and `--name user` |
+| 4. Fund both printed addresses | a team member | Cardano testnet faucet, **preprod** |
+| 5. Inspect the deployment | anyone | `python scripts/deploy_dex.py` |
+| 6. Deploy | with team approval | `python scripts/deploy_dex.py --submit` → `onchain/deployment.preprod.json` |
+| 7. Place a demo order | with team approval | `python scripts/place_order.py --amount-ada 10 --min-out 9000 --submit` |
+
+The deployment record holds hashes only; the scripts are re-derived from the
+batcher key and checked against it on load. Rebuilding `onchain/` with changed
+validator code after deploying makes that check fail — deliberately, since the
+changed scripts would no longer spend the deployed pool.
+
+Minting closes `--mint-window-slots` after the deploy transaction (default 7,200,
+two hours). After that no second `POOL` NFT can be minted, by anyone, ever.
+
+### 7.2 Running the batcher
+
 ```bash
 python scripts/run_batcher.py --policy p2 --live --log-json | tee logs/batcher.jsonl
 ```

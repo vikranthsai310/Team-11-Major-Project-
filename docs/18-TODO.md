@@ -1110,8 +1110,9 @@ explicit approval before any preprod transaction.
 | P7-3 pass-through fee | ✅ **T-O5** pass — `fee / n + margin`, `n` = order inputs in the batch; one lovelace over is rejected |
 | P7-4 `pool.ak` | ✅ **T-O4** pass — fee on net inflow, NFT carried, datum immutable, batcher-only |
 | P7-5 keys | ◐ `scripts/generate_keys.py` refuses paths inside the repo and overwrites; secret scan extended to the `.skey` JSON envelope and proven on a real generated key. Keys not yet generated |
-| P7-6 deploy | ☐ next — `blueprint.apply_parameters` ready (applies params via `aiken blueprint apply`) |
-| P7-7 submitter | ◐ pure core done: `plan_batch` (FIFO, drops unfillable orders and replans the fee share, Gate A raises), **T-N6** by identity; property test: 200 random order mixes never break the pool invariant. PyCardano tx building next |
+| P7-6 deploy | ◐ built, **not submitted** — `scripts/deploy_dex.py` (dry run by default) derives the deployment from the batcher key and a mint window, mints `TEAM11` + one `POOL` NFT under a key-**and**-time-locked policy (no second NFT can ever be minted), opens the pool. Record holds hashes only and is re-verified on load. Dry run verified with real `aiken blueprint apply` |
+| P7-7 submitter | ◐ offline complete — `plan_batch` (FIFO, drops unfillable orders and replans the fee share, Gate A raises), **T-N6** by identity; `build_batch_tx` assembles order + pool script inputs, tagged payouts, the new pool output, batcher signature and TTL, and **rebuilds until the real fee is at least the fee users were charged for** (else `order.ak` would reject); `await_confirmation`, `d4_row`. 18 offline tests against a fake chain context running PyCardano's real balancing. Live submission pending |
+| P7-11 orders | ◐ `scripts/place_order.py` (dry run by default), `build_cancel_tx` for T-O1 on chain |
 | P7-8 … P7-11 | ☐ need live preprod access |
 
 **A defect worth recording.** The first `order.ak` bound the datum to a local
