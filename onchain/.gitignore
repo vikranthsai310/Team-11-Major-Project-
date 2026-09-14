@@ -1,0 +1,4 @@
+# Aiken build output and fetched packages. plutus.json (the blueprint) is committed:
+# it is what the off-chain code reads script hashes and compiled code from.
+build/
+docs/

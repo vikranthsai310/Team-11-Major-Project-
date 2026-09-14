@@ -10,6 +10,8 @@ repos:
     rev: v5.0.0
     hooks:
       - id: end-of-file-fixer
+        # Compiler output, rewritten by every `aiken build` without a final newline.
+        exclude: ^onchain/plutus\.json$
       - id: trailing-whitespace
       - id: check-merge-conflict
       - id: check-added-large-files

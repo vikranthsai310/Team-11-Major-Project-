@@ -22,6 +22,10 @@ SELF = Path(__file__).name
 
 PATTERNS: dict[str, re.Pattern[str]] = {
     "cardano signing key": re.compile(r"\b(?:ed25519e?_sk|xprv)[0-9a-z]{20,}"),
+    # The text-envelope format cardano-cli and PyCardano write for .skey files:
+    # a CBOR byte string of 32 (5820) or 64/96 (5840/5860) bytes of key material.
+    "cardano key envelope": re.compile(r"\"cborHex\"\s*:\s*\"58(?:20|40|60)[0-9a-fA-F]{64,}"),
+    "signing key type tag": re.compile(r"SigningKey\w*_ed25519"),
     "cardano address": re.compile(r"\b(?:addr|stake)(?:_test)?1[0-9a-z]{30,}"),
     "blockfrost project id": re.compile(r"\b(?:mainnet|preprod|preview)[0-9A-Za-z]{28,}"),
     "assigned blockfrost id": re.compile(r"BLOCKFROST_PROJECT_ID\s*=\s*[\"']?[0-9A-Za-z]{8,}"),

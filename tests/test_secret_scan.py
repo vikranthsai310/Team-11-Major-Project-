@@ -29,6 +29,9 @@ PLANTED = {
     "testnet address": "addr = " + "addr_test1" + "v" * 45,
     "blockfrost id": "BLOCKFROST_PROJECT_ID" + "=" + "preprod" + "A1b2C3d4" * 4,
     "seed phrase": " ".join(["abandon"] * 11 + ["about"]),
+    # P7-5: the JSON text envelope PyCardano and cardano-cli write for .skey files.
+    "key envelope": '"cborHex": "58' + "20" + "ab" * 32 + '"',
+    "key type tag": '"type": "PaymentSigningKey' + 'Shelley_ed25519"',
 }
 
 

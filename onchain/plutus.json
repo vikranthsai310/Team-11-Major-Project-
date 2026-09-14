@@ -1,0 +1,391 @@
+{
+  "preamble": {
+    "title": "team11/batching-dex",
+    "description": "Minimal DEX for the adaptive batcher demonstration on Cardano preprod: an order validator with a pass-through batcher fee, and a constant-product pool validator (ADR-003, ADR-006).",
+    "version": "0.1.0",
+    "plutusVersion": "v3",
+    "compiler": {
+      "name": "Aiken",
+      "version": "v1.1.23+8949565"
+    },
+    "license": "Apache-2.0"
+  },
+  "validators": [
+    {
+      "title": "order.order.spend",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/dex~1types~1OrderDatum"
+        }
+      },
+      "redeemer": {
+        "title": "redeemer",
+        "schema": {
+          "$ref": "#/definitions/dex~1types~1OrderAction"
+        }
+      },
+      "parameters": [
+        {
+          "title": "batcher",
+          "schema": {
+            "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+          }
+        },
+        {
+          "title": "token_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "token_name",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1AssetName"
+          }
+        }
+      ],
+      "compiledCode": "5903ad01010022229800aba2aba1aba0aab9faab9eaab9dab9a9bae0049bae0039bae002488888888896600264653001300b00198059806000cdc3a4005300b0024888966002600460166ea800e2653001301000198081808800cdc3a400091119912cc004c00c0062b3001301237540150028b20268acc004c0200062b3001301237540150028b20268b202040402b30013001300f375400519800980998081baa0029180a180a980a980a980a980a980a980a980a800c88c8cc00400400c896600200314a115980099b8f375c602e00200714a31330020023018001404880a922259800980498091baa00b8998009bac3002301337540106eb8c058c04cdd5001c4c8c966002600c60286ea80063300130183015375400323019301a0019180c980d180d180d000c8c064c068c0680052222323322598009806980d9baa001899199119912cc004cc03cdd6180818109baa01601e8992cc004c04cc084dd5180518111baa0128acc004cdc49bad30013022375402530013756601860446ea801203d01d401913371266e04cdc08019bad300b3022375402401000514a08102266e24cdc099b80003375a600260446ea8048020009020118129813181318131813000c528203e300237566012603e6ea8c024c07cdd500518011bab3009301f375400253001001a4500a4410040086040603a6ea8008888c8cc88cc0080080048966002003003899192cc004cdc8803000c56600266e3c01800626eb4c09000a00a811226600800860500068110dd718110009812800a0463232330010010062259800800c00e26464b30013372201000315980099b8f00800189bab3025002802a0468998020021814801a046375c6046002604c002812052f5bded8c02900045901a19b80337066eb4c00cc068dd500799198008009bac301e301b375402044b30010018a4001133225980099baf3021301e37546042603c6ea8c020c078dd5001002c4cdc02400400310014070603e00266004004604000280e8dd6980e980f180f180f180f180f180d1baa00a330073758600460346ea803c96600266ebcc078c06cdd50009802980d9baa00b899baf3003301b375400266e9520043301d00e4bd7045282032301c30193754603860326ea8c00cc064dd500222c8098cc004dd6180b980a1baa00923375e6030602a6ea800402088c8cc00400400c896600200314c103d87a80008992cc004c010006266e9520003301a0014bd7044cc00c00cc070009016180d000a03040448b201c300f3754010300c3754007164028300b00130063754017149a26cac80201",
+      "hash": "b3c5a92ccd39af803b7b36c04f1101a2eda5b6d84439ea8b19230a69"
+    },
+    {
+      "title": "order.order.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "batcher",
+          "schema": {
+            "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+          }
+        },
+        {
+          "title": "token_policy",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1PolicyId"
+          }
+        },
+        {
+          "title": "token_name",
+          "schema": {
+            "$ref": "#/definitions/cardano~1assets~1AssetName"
+          }
+        }
+      ],
+      "compiledCode": "5903ad01010022229800aba2aba1aba0aab9faab9eaab9dab9a9bae0049bae0039bae002488888888896600264653001300b00198059806000cdc3a4005300b0024888966002600460166ea800e2653001301000198081808800cdc3a400091119912cc004c00c0062b3001301237540150028b20268acc004c0200062b3001301237540150028b20268b202040402b30013001300f375400519800980998081baa0029180a180a980a980a980a980a980a980a980a800c88c8cc00400400c896600200314a115980099b8f375c602e00200714a31330020023018001404880a922259800980498091baa00b8998009bac3002301337540106eb8c058c04cdd5001c4c8c966002600c60286ea80063300130183015375400323019301a0019180c980d180d180d000c8c064c068c0680052222323322598009806980d9baa001899199119912cc004cc03cdd6180818109baa01601e8992cc004c04cc084dd5180518111baa0128acc004cdc49bad30013022375402530013756601860446ea801203d01d401913371266e04cdc08019bad300b3022375402401000514a08102266e24cdc099b80003375a600260446ea8048020009020118129813181318131813000c528203e300237566012603e6ea8c024c07cdd500518011bab3009301f375400253001001a4500a4410040086040603a6ea8008888c8cc88cc0080080048966002003003899192cc004cdc8803000c56600266e3c01800626eb4c09000a00a811226600800860500068110dd718110009812800a0463232330010010062259800800c00e26464b30013372201000315980099b8f00800189bab3025002802a0468998020021814801a046375c6046002604c002812052f5bded8c02900045901a19b80337066eb4c00cc068dd500799198008009bac301e301b375402044b30010018a4001133225980099baf3021301e37546042603c6ea8c020c078dd5001002c4cdc02400400310014070603e00266004004604000280e8dd6980e980f180f180f180f180f180d1baa00a330073758600460346ea803c96600266ebcc078c06cdd50009802980d9baa00b899baf3003301b375400266e9520043301d00e4bd7045282032301c30193754603860326ea8c00cc064dd500222c8098cc004dd6180b980a1baa00923375e6030602a6ea800402088c8cc00400400c896600200314c103d87a80008992cc004c010006266e9520003301a0014bd7044cc00c00cc070009016180d000a03040448b201c300f3754010300c3754007164028300b00130063754017149a26cac80201",
+      "hash": "b3c5a92ccd39af803b7b36c04f1101a2eda5b6d84439ea8b19230a69"
+    },
+    {
+      "title": "pool.pool.spend",
+      "datum": {
+        "title": "datum",
+        "schema": {
+          "$ref": "#/definitions/dex~1types~1PoolDatum"
+        }
+      },
+      "redeemer": {
+        "title": "_redeemer",
+        "schema": {
+          "$ref": "#/definitions/Data"
+        }
+      },
+      "parameters": [
+        {
+          "title": "batcher",
+          "schema": {
+            "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+          }
+        }
+      ],
+      "compiledCode": "59035d010100229800aba2aba1aba0aab9faab9eaab9dab9a9bae0024888888896600264653001300900198049805000cc0240092225980099b8748008c020dd500144c8cc896600266e1d2000300b3754003133225980099b8748000c034dd5000c66002460246026003230123013301300191119199119801001000912cc004006007132325980099b910060018acc004cdc7803000c4dd6980b001401501444cc010010c06800d0141bae30140013017001405464646600200200c44b3001001801c4c8c96600266e440200062b30013371e01000313756602e0050054055133004004301b00340546eb8c054004c0600050160a5eb7bdb180520004888cc88c96600260300031332233225980099198008009bac301c301d301d301d301d301d301d301d301d3019375402244b30010018a508acc004cdc79bae301d0010178a51899801001180f000a030406d1598009803003c56600266ebcc024c060dd500219ba548010cc0680312f5c115980099b884800000a2b3001337109000000c6600260066eacc028c060dd5003e60026eacc028c060dd5003cdd7180d980c1baa00c9bae300a3018375401880426eb4c06cc070c070c070c070c060dd50064dc1241413802911119b89300130013370400800666e08cdc0980080319b825980099b88004006899b810060048a400080d0008cdc0980080299b825980099b88003005899b810050038a400080d000914a080b229410164528202c8a50405914a080b0c004dd59804180b1baa00298009bab300830163754005375c6032602c6ea802a6eb8c020c058dd5005200c301700129800800d22100a44100401516405464660020026eb0c014c050dd5006112cc004006297ae0899912cc0056600266ebcc068c05cdd5001180d180b9baa006898028014528202a89980c80119802002000c4cc010010005015180c000980c800a02c300330113754602860226ea80108cdc3a400530013756600860246ea80066eb8c00cc048dd50034dd7180a980b180b180b18091baa00640088b2018300f300c375400264660020026eb0c040c034dd5002912cc004006298103d87a80008992cc004cdd7980918079baa001005899ba548000cc0440052f5c1133003003301300240346022002807a2c8050c034004c034c038004c024dd50014590070c024004c010dd5004c52689b2b20041",
+      "hash": "3d2ef8667207d08d0e3f0f7ba3fe4af47fcf594c0aa0bc88ff9d1e4c"
+    },
+    {
+      "title": "pool.pool.else",
+      "redeemer": {
+        "schema": {}
+      },
+      "parameters": [
+        {
+          "title": "batcher",
+          "schema": {
+            "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+          }
+        }
+      ],
+      "compiledCode": "59035d010100229800aba2aba1aba0aab9faab9eaab9dab9a9bae0024888888896600264653001300900198049805000cc0240092225980099b8748008c020dd500144c8cc896600266e1d2000300b3754003133225980099b8748000c034dd5000c66002460246026003230123013301300191119199119801001000912cc004006007132325980099b910060018acc004cdc7803000c4dd6980b001401501444cc010010c06800d0141bae30140013017001405464646600200200c44b3001001801c4c8c96600266e440200062b30013371e01000313756602e0050054055133004004301b00340546eb8c054004c0600050160a5eb7bdb180520004888cc88c96600260300031332233225980099198008009bac301c301d301d301d301d301d301d301d301d3019375402244b30010018a508acc004cdc79bae301d0010178a51899801001180f000a030406d1598009803003c56600266ebcc024c060dd500219ba548010cc0680312f5c115980099b884800000a2b3001337109000000c6600260066eacc028c060dd5003e60026eacc028c060dd5003cdd7180d980c1baa00c9bae300a3018375401880426eb4c06cc070c070c070c070c060dd50064dc1241413802911119b89300130013370400800666e08cdc0980080319b825980099b88004006899b810060048a400080d0008cdc0980080299b825980099b88003005899b810050038a400080d000914a080b229410164528202c8a50405914a080b0c004dd59804180b1baa00298009bab300830163754005375c6032602c6ea802a6eb8c020c058dd5005200c301700129800800d22100a44100401516405464660020026eb0c014c050dd5006112cc004006297ae0899912cc0056600266ebcc068c05cdd5001180d180b9baa006898028014528202a89980c80119802002000c4cc010010005015180c000980c800a02c300330113754602860226ea80108cdc3a400530013756600860246ea80066eb8c00cc048dd50034dd7180a980b180b180b18091baa00640088b2018300f300c375400264660020026eb0c040c034dd5002912cc004006298103d87a80008992cc004cdd7980918079baa001005899ba548000cc0440052f5c1133003003301300240346022002807a2c8050c034004c034c038004c024dd50014590070c024004c010dd5004c52689b2b20041",
+      "hash": "3d2ef8667207d08d0e3f0f7ba3fe4af47fcf594c0aa0bc88ff9d1e4c"
+    }
+  ],
+  "definitions": {
+    "Data": {
+      "title": "Data",
+      "description": "Any Plutus data."
+    },
+    "Int": {
+      "dataType": "integer"
+    },
+    "Option<cardano/address/StakeCredential>": {
+      "title": "Option",
+      "anyOf": [
+        {
+          "title": "Some",
+          "description": "An optional value.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/cardano~1address~1StakeCredential"
+            }
+          ]
+        },
+        {
+          "title": "None",
+          "description": "Nothing.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "aiken/crypto/ScriptHash": {
+      "title": "ScriptHash",
+      "dataType": "bytes"
+    },
+    "aiken/crypto/VerificationKeyHash": {
+      "title": "VerificationKeyHash",
+      "dataType": "bytes"
+    },
+    "cardano/address/Address": {
+      "title": "Address",
+      "description": "A Cardano `Address` typically holding one or two credential references.\n\n Note that legacy bootstrap addresses (a.k.a. 'Byron addresses') are\n completely excluded from Plutus contexts. Thus, from an on-chain\n perspective only exists addresses of type 00, 01, ..., 07 as detailed\n in [CIP-0019 :: Shelley Addresses](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0019/#shelley-addresses).",
+      "anyOf": [
+        {
+          "title": "Address",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "payment_credential",
+              "$ref": "#/definitions/cardano~1address~1PaymentCredential"
+            },
+            {
+              "title": "stake_credential",
+              "$ref": "#/definitions/Option<cardano~1address~1StakeCredential>"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/address/Credential": {
+      "title": "Credential",
+      "description": "A general structure for representing an on-chain `Credential`.\n\n Credentials are always one of two kinds: a direct public/private key\n pair, or a script (native or Plutus).",
+      "anyOf": [
+        {
+          "title": "VerificationKey",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            }
+          ]
+        },
+        {
+          "title": "Script",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1ScriptHash"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/address/PaymentCredential": {
+      "title": "PaymentCredential",
+      "description": "A general structure for representing an on-chain `Credential`.\n\n Credentials are always one of two kinds: a direct public/private key\n pair, or a script (native or Plutus).",
+      "anyOf": [
+        {
+          "title": "VerificationKey",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            }
+          ]
+        },
+        {
+          "title": "Script",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "$ref": "#/definitions/aiken~1crypto~1ScriptHash"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/address/StakeCredential": {
+      "title": "StakeCredential",
+      "description": "Represent a type of object that can be represented either inline (by hash)\n or via a reference (i.e. a pointer to an on-chain location).\n\n This is mainly use for capturing pointers to a stake credential\n registration certificate in the case of so-called pointer addresses.",
+      "anyOf": [
+        {
+          "title": "Inline",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "$ref": "#/definitions/cardano~1address~1Credential"
+            }
+          ]
+        },
+        {
+          "title": "Pointer",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": [
+            {
+              "title": "slot_number",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "transaction_index",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "certificate_index",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "cardano/assets/AssetName": {
+      "title": "AssetName",
+      "dataType": "bytes"
+    },
+    "cardano/assets/PolicyId": {
+      "title": "PolicyId",
+      "dataType": "bytes"
+    },
+    "dex/types/Direction": {
+      "title": "Direction",
+      "description": "Which way an order swaps. Asset A is always lovelace; asset B is the pool token.",
+      "anyOf": [
+        {
+          "title": "AtoB",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "BtoA",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "dex/types/OrderAction": {
+      "title": "OrderAction",
+      "anyOf": [
+        {
+          "title": "Execute",
+          "description": "The batcher executes the order inside a batch.",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": []
+        },
+        {
+          "title": "Cancel",
+          "description": "The owner reclaims an unbatched order.",
+          "dataType": "constructor",
+          "index": 1,
+          "fields": []
+        }
+      ]
+    },
+    "dex/types/OrderDatum": {
+      "title": "OrderDatum",
+      "description": "An order locked at the order script by a user's wallet.",
+      "anyOf": [
+        {
+          "title": "OrderDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "owner",
+              "description": "May cancel the order and reclaim its funds at any time (T-O1).",
+              "$ref": "#/definitions/aiken~1crypto~1VerificationKeyHash"
+            },
+            {
+              "title": "return_address",
+              "description": "Where the swapped funds must be paid (T-O2).",
+              "$ref": "#/definitions/cardano~1address~1Address"
+            },
+            {
+              "title": "direction",
+              "$ref": "#/definitions/dex~1types~1Direction"
+            },
+            {
+              "title": "amount_in",
+              "description": "Units of the input asset to swap.",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "min_out",
+              "description": "The slippage floor: fewest units of the output asset the user accepts (T-O2).",
+              "$ref": "#/definitions/Int"
+            },
+            {
+              "title": "margin",
+              "description": "The batcher's service margin in lovelace, on top of the fee share (T-O5).",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    },
+    "dex/types/PoolDatum": {
+      "title": "PoolDatum",
+      "description": "The pool's identity and parameters. Reserves are read from the UTxO's value.",
+      "anyOf": [
+        {
+          "title": "PoolDatum",
+          "dataType": "constructor",
+          "index": 0,
+          "fields": [
+            {
+              "title": "token_policy",
+              "$ref": "#/definitions/cardano~1assets~1PolicyId"
+            },
+            {
+              "title": "token_name",
+              "$ref": "#/definitions/cardano~1assets~1AssetName"
+            },
+            {
+              "title": "nft_policy",
+              "description": "Pool identity NFT, which must be carried through every batch (T-O4).",
+              "$ref": "#/definitions/cardano~1assets~1PolicyId"
+            },
+            {
+              "title": "nft_name",
+              "$ref": "#/definitions/cardano~1assets~1AssetName"
+            },
+            {
+              "title": "fee_bps",
+              "description": "Swap fee in basis points, retained by the pool.",
+              "$ref": "#/definitions/Int"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

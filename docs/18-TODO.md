@@ -1095,6 +1095,32 @@ Priorities within it: the **Pool panel** (LOCKED state, blocks in flight) and th
 Honour the visual rules: WAIT carries no colour; every state ships an icon **and** a label; colour is never the sole carrier.
 **Done when** — an operator can watch head-of-line blocking happen live. The Compare view is skippable — the results table plus F5 already carry it.
 
+### Phase 7 status — offline half built (started 2026-09-14)
+
+Team decisions: Aiken v1.1.23 installed from the official GitHub release
+(checksum verified, `%USERPROFILE%\.aiken\bin`); **build offline first**, then go
+live only after the Blockfrost preprod project ID is in `.env` and the batcher
+address is funded — both done by a team member, not by tooling — and with
+explicit approval before any preprod transaction.
+
+| Item | Status |
+|---|---|
+| P7-1 Aiken toolchain | ✅ `onchain/` project, stdlib v3.1.0, `aiken check` + `aiken build` clean |
+| P7-2 `order.ak` | ✅ **T-O1, T-O2, T-O3** pass in Aiken, plus a double-satisfaction guard: each payout is tagged with its order's `OutputReference` |
+| P7-3 pass-through fee | ✅ **T-O5** pass — `fee / n + margin`, `n` = order inputs in the batch; one lovelace over is rejected |
+| P7-4 `pool.ak` | ✅ **T-O4** pass — fee on net inflow, NFT carried, datum immutable, batcher-only |
+| P7-5 keys | ◐ `scripts/generate_keys.py` refuses paths inside the repo and overwrites; secret scan extended to the `.skey` JSON envelope and proven on a real generated key. Keys not yet generated |
+| P7-6 deploy | ☐ next — `blueprint.apply_parameters` ready (applies params via `aiken blueprint apply`) |
+| P7-7 submitter | ◐ pure core done: `plan_batch` (FIFO, drops unfillable orders and replans the fee share, Gate A raises), **T-N6** by identity; property test: 200 random order mixes never break the pool invariant. PyCardano tx building next |
+| P7-8 … P7-11 | ☐ need live preprod access |
+
+**A defect worth recording.** The first `order.ak` bound the datum to a local
+named `order` — the validator's own name — and failed to compile with no
+diagnostic: Aiken prints errors only to a TTY. Found by bisection. Datums are now
+guarded by `tests/test_onchain.py`, which checks every Python constructor index
+and field order against `plutus.json`, and `tests/test_blueprint.py` checks that
+PyCardano derives the same script hashes the compiler recorded.
+
 ### ✅ Phase 7 exit gate
 - [ ] T-O1 … T-O6 pass, including the security tests T-O2 and T-O3
 - [ ] Estimator within ±5 % size and ±10 % execution units against D4
