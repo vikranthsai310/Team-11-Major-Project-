@@ -9,6 +9,9 @@
 
 # --- Datasets: contents are gitignored, provenance is committed (X-8) ---
 data/raw/
+# Live preprod runs: D4 rows and batcher logs. Summaries reach experiments/ instead.
+/data/live/
+/logs/
 data/processed/*
 !data/processed/*.sha256
 !data/processed/manifest.json

@@ -182,8 +182,17 @@ two hours). After that no second `POOL` NFT can be minted, by anyone, ever.
 ### 7.2 Running the batcher
 
 ```bash
+python scripts/run_batcher.py --policy p2                 # shadow: decides and builds, submits nothing
 python scripts/run_batcher.py --policy p2 --live --log-json | tee logs/batcher.jsonl
 ```
+
+Run in **shadow mode first**: it reads preprod, makes the real decision every
+block and builds and signs the exact batch it would send, without submitting.
+Only once its decisions look right is `--live` worth the key. Each record's
+`resolution` says what happened: `wait`, `shadow`, `submitted`, `locked`
+(head-of-line — no decision), `included`, `expired`, `rejected`, `unfillable`,
+`stale_view` (the API has not yet indexed our own confirmed batch), `stopping`.
+Live runs append D4 rows to `data/live/d4_preprod.jsonl`.
 
 **Health signals to watch**
 
