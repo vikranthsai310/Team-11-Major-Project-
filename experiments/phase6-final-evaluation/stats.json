@@ -1,0 +1,591 @@
+{
+  "tests": {
+    "light": [
+      {
+        "metric": "l_mean",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 0.0,
+        "ci_low": 0.0,
+        "ci_high": 0.0,
+        "p_value": 1.0,
+        "p_adjusted": 1.0,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_mean",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 11.03095954275506,
+        "ci_low": 10.763501989766915,
+        "ci_high": 11.64138347754514,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_mean",
+        "candidate": "p3(dqn)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 41.28998063860928,
+        "ci_low": 40.47223023314758,
+        "ci_high": 42.96463378613215,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 0.0,
+        "ci_low": 0.0,
+        "ci_high": 0.0,
+        "p_value": 1.0,
+        "p_adjusted": 1.0,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 19.0,
+        "ci_low": 18.149999999999636,
+        "ci_high": 20.325000000000273,
+        "p_value": 3.797323232321275e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p3(dqn)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 50.18000000000001,
+        "ci_low": 49.400000000000006,
+        "ci_high": 50.839999999999975,
+        "p_value": 3.8855838596547814e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 112071.18343088168,
+        "ci_low": 109123.55984576969,
+        "ci_high": 116510.69781809008,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 59793.30241174314,
+        "ci_low": 57507.290064944755,
+        "ci_high": 62656.25319268254,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p3(dqn)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 18508.486917704686,
+        "ci_low": 17602.679410004115,
+        "ci_high": 20583.556488621776,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.417590909089147e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      }
+    ],
+    "matched": [
+      {
+        "metric": "l_mean",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 0.0,
+        "ci_low": 0.0,
+        "ci_high": 0.0,
+        "p_value": 1.0,
+        "p_adjusted": 1.0,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_mean",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 5.1240803991229456,
+        "ci_low": 4.8738064770154566,
+        "ci_high": 5.269756251084399,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.109344110340442e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_mean",
+        "candidate": "p3(dqn)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 31.576795827178625,
+        "ci_low": 30.976919434953572,
+        "ci_high": 34.31683116678139,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.109344110340442e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 0.0,
+        "ci_low": 0.0,
+        "ci_high": 0.0,
+        "p_value": 1.0,
+        "p_adjusted": 1.0,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 6.0,
+        "ci_low": 5.5,
+        "ci_high": 6.0,
+        "p_value": 2.910684781761718e-18,
+        "p_adjusted": 2.619616303585546e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p3(dqn)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 40.19999999999999,
+        "ci_low": 39.400000000000006,
+        "ci_high": 41.099999999999994,
+        "p_value": 3.886680137925552e-18,
+        "p_adjusted": 3.109344110340442e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 74534.09596943349,
+        "ci_low": 73246.26443951514,
+        "ci_high": 76536.03537866892,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.109344110340442e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 44679.84645036669,
+        "ci_low": 42966.37885976852,
+        "ci_high": 46219.259392655236,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.109344110340442e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p3(dqn)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 6883.531781643636,
+        "ci_low": 6384.8656750381415,
+        "ci_high": 8529.893543723214,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.109344110340442e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      }
+    ],
+    "heavy": [
+      {
+        "metric": "l_mean",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 0.0,
+        "ci_low": 0.0,
+        "ci_high": 0.0,
+        "p_value": 1.0,
+        "p_adjusted": 1.0,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_mean",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 1.9658202638886735,
+        "ci_low": 1.88214143028366,
+        "ci_high": 2.100776984363282,
+        "p_value": 7.559735353237344e-17,
+        "p_adjusted": 3.779867676618672e-16,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_mean",
+        "candidate": "p3(dqn)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 73.35993214671159,
+        "ci_low": 31.01869611467896,
+        "ci_high": 194.1880752888044,
+        "p_value": 4.0161556854627e-18,
+        "p_adjusted": 3.506903860586318e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 0.0,
+        "ci_low": 0.0,
+        "ci_high": 0.0,
+        "p_value": 1.0,
+        "p_adjusted": 1.0,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 1.0,
+        "ci_low": 0.0,
+        "ci_high": 1.0,
+        "p_value": 4.874386159415201e-07,
+        "p_adjusted": 1.4623158478245603e-06,
+        "significant": false,
+        "ci_excludes_zero": false
+      },
+      {
+        "metric": "l_p95",
+        "candidate": "p3(dqn)",
+        "reference": "e3(greedy)",
+        "n": 100,
+        "median_difference": 547.2200000000008,
+        "ci_low": 31.700000000000003,
+        "ci_high": 590.9699999999997,
+        "p_value": 1.601353337674086e-16,
+        "p_adjusted": 6.405413350696344e-16,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p2(D=120,N=1)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 37902.154805605314,
+        "ci_low": 36417.53904942145,
+        "ci_high": 39031.70467199104,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.506903860586318e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p2(D=120,N=4)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 24395.624370848294,
+        "ci_low": 23000.789833816787,
+        "ci_high": 25791.519534712992,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.506903860586318e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      },
+      {
+        "metric": "c_user",
+        "candidate": "p3(dqn)",
+        "reference": "e1(M=16)",
+        "n": 100,
+        "median_difference": 6546.793169094344,
+        "ci_low": 1880.316772361999,
+        "ci_high": 17775.777106294117,
+        "p_value": 3.8965598450959084e-18,
+        "p_adjusted": 3.506903860586318e-17,
+        "significant": true,
+        "ci_excludes_zero": true
+      }
+    ]
+  },
+  "verdicts": [
+    {
+      "id": "S2",
+      "criterion": "Gate A violations exactly zero",
+      "measured": 0,
+      "pass": true
+    },
+    {
+      "id": "S3",
+      "rate": "light",
+      "criterion": "L-p95 significantly below best static, CI excluding zero",
+      "measured": [
+        "p2(D=120,N=1): +0.0 [+0.0, +0.0]",
+        "p2(D=120,N=4): +19.0 [+18.1, +20.3]",
+        "p3(dqn): +50.2 [+49.4, +50.8]"
+      ],
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "light",
+      "policy": "p2(D=120,N=1)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "light",
+      "policy": "p2(D=120,N=1)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.745, 0.752] vs [0.838, 0.848]",
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "light",
+      "policy": "p2(D=120,N=4)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "light",
+      "policy": "p2(D=120,N=4)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.763, 0.768] vs [0.838, 0.848]",
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "light",
+      "policy": "p3(dqn)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "light",
+      "policy": "p3(dqn)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.840, 0.852] vs [0.838, 0.848]",
+      "pass": true
+    },
+    {
+      "id": "S5",
+      "rate": "light",
+      "criterion": "a proposed policy Pareto-dominates a static baseline (medians)",
+      "measured": "none",
+      "pass": false
+    },
+    {
+      "id": "S3",
+      "rate": "matched",
+      "criterion": "L-p95 significantly below best static, CI excluding zero",
+      "measured": [
+        "p2(D=120,N=1): +0.0 [+0.0, +0.0]",
+        "p2(D=120,N=4): +6.0 [+5.5, +6.0]",
+        "p3(dqn): +40.2 [+39.4, +41.1]"
+      ],
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "matched",
+      "policy": "p2(D=120,N=1)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "matched",
+      "policy": "p2(D=120,N=1)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.742, 0.748] vs [0.825, 0.838]",
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "matched",
+      "policy": "p2(D=120,N=4)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "matched",
+      "policy": "p2(D=120,N=4)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.765, 0.772] vs [0.825, 0.838]",
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "matched",
+      "policy": "p3(dqn)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "matched",
+      "policy": "p3(dqn)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.824, 0.829] vs [0.825, 0.838]",
+      "pass": true
+    },
+    {
+      "id": "S5",
+      "rate": "matched",
+      "criterion": "a proposed policy Pareto-dominates a static baseline (medians)",
+      "measured": [
+        "p2(D=120,N=4) > e2(T=20)"
+      ],
+      "pass": true
+    },
+    {
+      "id": "S3",
+      "rate": "heavy",
+      "criterion": "L-p95 significantly below best static, CI excluding zero",
+      "measured": [
+        "p2(D=120,N=1): +0.0 [+0.0, +0.0]",
+        "p2(D=120,N=4): +1.0 [+0.0, +1.0]",
+        "p3(dqn): +547.2 [+31.7, +591.0]"
+      ],
+      "pass": false
+    },
+    {
+      "id": "S4",
+      "rate": "heavy",
+      "policy": "p2(D=120,N=1)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "heavy",
+      "policy": "p2(D=120,N=1)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.564, 0.729] vs [0.564, 0.729]",
+      "pass": true
+    },
+    {
+      "id": "S4",
+      "rate": "heavy",
+      "policy": "p2(D=120,N=4)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0000, 0.0000] vs [0.0000, 0.0000]",
+      "pass": true
+    },
+    {
+      "id": "S6",
+      "rate": "heavy",
+      "policy": "p2(D=120,N=4)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.580, 0.746] vs [0.564, 0.729]",
+      "pass": true
+    },
+    {
+      "id": "S4",
+      "rate": "heavy",
+      "policy": "p3(dqn)",
+      "criterion": "X-rate not worse than best static (CI overlapping or lower)",
+      "measured": "[0.0325, 0.1025] vs [0.0000, 0.0000]",
+      "pass": false
+    },
+    {
+      "id": "S6",
+      "rate": "heavy",
+      "policy": "p3(dqn)",
+      "criterion": "F-jain not worse than best static (CI overlapping or higher)",
+      "measured": "[0.608, 0.756] vs [0.564, 0.729]",
+      "pass": true
+    },
+    {
+      "id": "S5",
+      "rate": "heavy",
+      "criterion": "a proposed policy Pareto-dominates a static baseline (medians)",
+      "measured": "none",
+      "pass": false
+    }
+  ],
+  "p3_seed_spread": {
+    "('l_p95', 'mean')": {
+      "heavy": 870.08,
+      "light": 170.4,
+      "matched": 158.1
+    },
+    "('l_p95', 'std')": {
+      "heavy": 1528.356271804,
+      "light": 21.5127868952,
+      "matched": 16.9720358237
+    },
+    "('c_user', 'mean')": {
+      "heavy": 85306.2110749049,
+      "light": 117513.6748936452,
+      "matched": 89372.5563720315
+    },
+    "('c_user', 'std')": {
+      "heavy": 17341.855495854,
+      "light": 13876.8745613433,
+      "matched": 9335.8122039351
+    }
+  }
+}

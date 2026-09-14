@@ -1,0 +1,97 @@
+{
+  "arrival_process": {
+    "base_per_slot": 0.09834780842338683,
+    "burst_hours": 1.0,
+    "burst_multiplier": 6.0,
+    "bursts_per_day": 1.0,
+    "diurnal": [
+      0.9944049545500843,
+      0.901768896080508,
+      0.9260297439118294,
+      0.8618613883265872,
+      0.8024133283536429,
+      0.7593730210728754,
+      0.8341917724989747,
+      0.8400319346888213,
+      0.8989673071830787,
+      0.8907768160344747,
+      0.9406943802225458,
+      0.8953379481154065,
+      1.033648815894802,
+      1.1062275549955305,
+      1.2467332738341819,
+      1.246837039407823,
+      1.271202920671582,
+      1.1825674324089022,
+      1.1813892537031492,
+      1.1461325121905837,
+      1.0731900998395298,
+      1.0556946468833464,
+      1.0165614027123442,
+      0.893963556419399
+    ],
+    "expected_burst_share": 0.041666666666666664
+  },
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "configurations_fixed_on": "validation",
+  "created_utc": "2026-09-14T13:15:01+00:00",
+  "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "episodes": 100,
+  "experiment_id": "phase6-final-evaluation",
+  "forced_rerun": false,
+  "gate_a_violations": 0,
+  "git": {
+    "dirty": false,
+    "sha": "0a5c7d5be9fe7b933bce220902164e202bb9b882"
+  },
+  "known_asymmetry": "P3 runs through the Gym env, which does not model rollbacks (p=0.0005/block in the simulator); every other policy does",
+  "p3_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "p3_training_steps": 200000,
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "rates": [
+    "light",
+    "matched",
+    "heavy"
+  ],
+  "seed": 42,
+  "split": "test"
+}

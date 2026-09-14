@@ -396,12 +396,25 @@ def figure_f5(points: pd.DataFrame, out_dir: Path, provenance: str = "") -> dict
         key = (round(record["c_user"], 0), round(record["l_p95"], 1))
         labels.setdefault(key, []).append(record["policy"])
 
-    for (c_user, l_p95), names in labels.items():
+    # Distinct points that sit close together (ORACLE beside the P2 it bounds)
+    # would still collide, so a label near one already placed moves to the left
+    # of its point and below.
+    x_span = max(points["c_user"].max() - points["c_user"].min(), 1.0)
+    y_span = max(points["l_p95"].max() - points["l_p95"].min(), 1.0)
+    placed: list[tuple[float, float]] = []
+    for (c_user, l_p95), names in sorted(labels.items(), key=lambda item: -item[0][1]):
+        near = sum(
+            1
+            for x, y in placed
+            if abs(x - c_user) / x_span < 0.12 and abs(y - l_p95) / y_span < 0.06
+        )
+        placed.append((c_user, l_p95))
         axis.annotate(
             " ≡ ".join(names),
             (c_user, l_p95),
-            xytext=(6, 5),
+            xytext=(-6, -13 * near) if near else (6, 5),
             textcoords="offset points",
+            ha="right" if near else "left",
             fontsize=7.5,
             color=INK_SECONDARY,
         )
@@ -456,32 +469,47 @@ def figure_f6(latencies: pd.DataFrame, out_dir: Path, provenance: str = "") -> d
     figure, axis = plt.subplots(figsize=(8, 4.6))
 
     styles = {"e2(T=20)": "-", "e3(greedy)": ":"}
-    crossings = []
+    series = {}
     for name in shown:
         values = np.sort(latencies.loc[latencies["policy"] == name, "latency"].to_numpy())
-        if values.size == 0:
-            continue
+        if values.size:
+            series[name] = values
+
+    # The p95 readings go in the legend: crossings a few slots apart cannot carry
+    # side-by-side labels legibly. The axis stops well past every 99th percentile;
+    # a rare long tail would otherwise squash every curve against the y-axis, so
+    # what is cut off is stated on the figure rather than silently dropped.
+    upper = 1.6 * max(float(np.percentile(v, 99)) for v in series.values()) if series else 1.0
+    hidden = []
+    for name, values in series.items():
         cdf = np.arange(1, values.size + 1) / values.size
-        axis.plot(values, cdf, lw=1.8, ls=styles.get(name, "-"), color=SERIES[name], label=name)
         p95 = float(np.percentile(values, 95))
-        crossings.append((name, p95))
+        axis.plot(
+            values,
+            cdf,
+            lw=1.8,
+            ls=styles.get(name, "-"),
+            color=SERIES[name],
+            label=f"{name} · p95 {p95:.0f}",
+        )
         axis.plot(p95, 0.95, "o", ms=4, color=SERIES[name])
+        beyond = float((values > upper).mean())
+        if beyond > 0:
+            hidden.append(f"{name}: {beyond:.1%} of orders beyond axis, max {values[-1]:,.0f}")
 
     axis.axhline(0.95, color=MUTED, lw=0.8, ls="--")
-    # Crossings that sit close together would print on top of each other, so each
-    # label steps down only when it is near the previous one.
-    last_x, level = None, 0
-    for name, p95 in sorted(crossings, key=lambda c: c[1]):
-        level = level + 1 if last_x is not None and p95 - last_x < 12 else 0
-        axis.annotate(
-            f"p95 {p95:.0f}",
-            (p95, 0.95),
-            xytext=(4, -12 - 11 * level),
-            textcoords="offset points",
+    axis.set_xlim(0, upper)
+    if hidden:
+        axis.text(
+            0.99,
+            0.5,
+            "\n".join(hidden),
+            transform=axis.transAxes,
+            ha="right",
+            va="center",
             fontsize=7,
-            color=SERIES[name],
+            color=MUTED,
         )
-        last_x = p95
 
     axis.set_xlabel("confirmation latency, slots")
     axis.set_ylabel("share of settled orders")
