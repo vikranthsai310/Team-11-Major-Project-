@@ -119,7 +119,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--episodes", type=int, default=4)
     parser.add_argument("--blocks-per-episode", type=int, default=1_000)
     parser.add_argument("--split", default="val")
+    # Ablations A3/A4 score their own checkpoints on the same episodes. The P2
+    # comparators and F7 belong to the main Phase 5 evaluation, so an ablation run
+    # neither recomputes nor overwrites them.
+    parser.add_argument("--checkpoints", default="phase5-dqn-seed", help="experiment prefix")
+    parser.add_argument("--no-forecast", action="store_true", help="score A3 agents")
+    parser.add_argument("--experiment", default="phase5-evaluation")
     args = parser.parse_args(argv)
+    main_run = args.experiment == "phase5-evaluation"
 
     from stable_baselines3 import DQN
 
@@ -136,20 +143,21 @@ def main(argv: list[str] | None = None) -> int:
     forecaster = (
         lgbm_load(args.models, horizon=FORECAST_HORIZON) if args.models else MovingAverage()
     )
+    agent_forecaster = None if args.no_forecast else forecaster
 
     print(
-        f"scoring on the {args.split} split · {len(episodes)} episodes · "
-        f"forecaster {forecaster.name}\n"
+        f"scoring {args.checkpoints}* on the {args.split} split · {len(episodes)} episodes · "
+        f"agent forecaster {agent_forecaster.name if agent_forecaster else 'none'}\n"
     )
 
     per_seed = {}
     for seed in args.seeds:
-        checkpoint = Path("experiments") / f"phase5-dqn-seed{seed}" / "models" / "dqn.zip"
+        checkpoint = Path("experiments") / f"{args.checkpoints}{seed}" / "models" / "dqn.zip"
         if not checkpoint.exists():
             print(f"  seed {seed}: no checkpoint at {checkpoint}, skipped")
             continue
         model = DQN.load(checkpoint)
-        per_seed[seed] = score_agent(model, frame, episodes, process, forecaster)
+        per_seed[seed] = score_agent(model, frame, episodes, process, agent_forecaster)
         row = per_seed[seed]
         print(
             f"  seed {seed}: L-p95 {row['l_p95']:7.1f}  C-user {row['c_user']:11.1f}  "
@@ -172,6 +180,29 @@ def main(argv: list[str] | None = None) -> int:
     print(f"  violations {sum(row['violations'] for row in per_seed.values()):>11}   <- S2")
     collapsed = sum(row["collapsed"] for row in per_seed.values())
     print(f"  collapsed  {collapsed:>11} of {len(per_seed)}")
+
+    if not main_run:
+        manifest = write_manifest(
+            args.experiment,
+            seed=DEFAULT_SEED,
+            dataset_checksum=sha256_of(args.data),
+            split=args.split,
+            episodes=len(episodes),
+            checkpoints=args.checkpoints,
+            agent_forecaster=agent_forecaster.name if agent_forecaster else "none",
+            per_seed={str(k): v for k, v in per_seed.items()},
+            summary=summary,
+        )
+        (manifest.parent / "rl_evaluation.json").write_text(
+            json.dumps(
+                {"per_seed": {str(k): v for k, v in per_seed.items()}, "summary": summary},
+                indent=2,
+                default=str,
+            )
+            + "\n"
+        )
+        print(f"\nmanifest {manifest}")
+        return 0
 
     # The whole P2 frontier, not one config. Comparing a learned policy against a
     # single hand-picked N_MIN would let the choice of comparator decide the

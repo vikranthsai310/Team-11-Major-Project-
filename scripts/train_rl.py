@@ -47,14 +47,23 @@ DQN_CONFIG = {
 }
 
 
-def make_env_factory(frame, episodes, process, forecaster, weights=None, rate: str = "matched"):
+def make_env_factory(
+    frame, episodes, process, forecaster, weights=None, rate: str = "matched", latency_power=2
+):
     """An env over a training window chosen by the episode index."""
 
     def factory(seed: int) -> BatchingEnv:
         episode = episodes[seed % len(episodes)]
         blocks = episode.blocks(frame)
         prepared = CachedForecaster(forecaster).prepare(blocks) if forecaster else None
-        return BatchingEnv(blocks, process, forecaster=prepared, weights=weights, seed=seed)
+        return BatchingEnv(
+            blocks,
+            process,
+            forecaster=prepared,
+            weights=weights,
+            latency_power=latency_power,
+            seed=seed,
+        )
 
     return factory
 
@@ -107,7 +116,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--episodes", type=int, default=8)
     parser.add_argument("--blocks-per-episode", type=int, default=1_000)
     parser.add_argument("--experiment", default=None)
+    # P5-13. A3 retrains with no forecast in the state (the three fill_hat inputs
+    # are constant zero), rather than zeroing them on an agent trained with them.
+    # A4 retrains with a linear instead of a quadratic latency penalty.
+    parser.add_argument("--no-forecast", action="store_true", help="ablation A3")
+    parser.add_argument("--linear-latency", action="store_true", help="ablation A4")
     args = parser.parse_args(argv)
+    latency_power = 1 if args.linear_latency else 2
+    ablation = "A3" if args.no_forecast else "A4" if args.linear_latency else None
+    if args.no_forecast and args.linear_latency:
+        parser.error("run A3 and A4 separately, or neither isolates its question")
 
     from stable_baselines3 import DQN
     from stable_baselines3.common.env_checker import check_env
@@ -131,20 +149,30 @@ def main(argv: list[str] | None = None) -> int:
         blocks_per_episode=args.blocks_per_episode,
     )
 
-    forecaster = (
-        lgbm_load(args.models, horizon=FORECAST_HORIZON) if args.models else MovingAverage()
-    )
-    print(f"forecaster: {forecaster.name}")
+    if args.no_forecast:
+        forecaster = None
+    else:
+        forecaster = (
+            lgbm_load(args.models, horizon=FORECAST_HORIZON) if args.models else MovingAverage()
+        )
+    forecaster_name = forecaster.name if forecaster else "none"
+    print(f"forecaster: {forecaster_name} · latency penalty power {latency_power}")
 
     # P5-5: normalise every reward term before weights are applied, or latency
     # dominates by orders of magnitude and cost becomes decorative.
-    raw_factory = make_env_factory(frame, train_episodes, process, forecaster)
+    raw_factory = make_env_factory(
+        frame, train_episodes, process, forecaster, latency_power=latency_power
+    )
     print("calibrating reward weights...")
     weights = calibrate_weights(raw_factory, episodes=2, seed=args.seed)
     print(f"  {weights.as_dict()}")
 
-    factory = make_env_factory(frame, train_episodes, process, forecaster, weights)
-    val_factory = make_env_factory(frame, val_episodes, process, forecaster, weights)
+    factory = make_env_factory(
+        frame, train_episodes, process, forecaster, weights, latency_power=latency_power
+    )
+    val_factory = make_env_factory(
+        frame, val_episodes, process, forecaster, weights, latency_power=latency_power
+    )
 
     print("checking the environment against the SB3 contract...")
     check_env(factory(args.seed), warn=True, skip_render_check=True)
@@ -155,7 +183,8 @@ def main(argv: list[str] | None = None) -> int:
     print(f"training DQN · {args.steps:,} steps · seed {args.seed}")
     model.learn(total_timesteps=args.steps, progress_bar=False)
 
-    experiment = args.experiment or f"phase5-dqn-seed{args.seed}"
+    default_name = {"A3": "phase6-a3-seed", "A4": "phase6-a4-seed"}.get(ablation, "phase5-dqn-seed")
+    experiment = args.experiment or f"{default_name}{args.seed}"
     manifest = write_manifest(
         experiment,
         seed=args.seed,
@@ -163,7 +192,9 @@ def main(argv: list[str] | None = None) -> int:
         algorithm="DQN",
         config=DQN_CONFIG,
         steps=args.steps,
-        forecaster=forecaster.name,
+        ablation=ablation,
+        latency_power=latency_power,
+        forecaster=forecaster_name,
         reward_weights=weights.as_dict(),
         train_episodes=len(train_episodes),
         blocks_per_episode=args.blocks_per_episode,

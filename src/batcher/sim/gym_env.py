@@ -90,9 +90,15 @@ class BatchingEnv(gym.Env):
         rate_multiplier: float = 1.0,
         d_max: int = D_MAX,
         ttl_slots: int = TTL_SLOTS,
+        latency_power: int = 2,
         seed: int | None = None,
     ):
+        """``latency_power`` is 2 as specified; ablation A4 sets it to 1 to ask
+        whether the quadratic tail penalty is what does the work."""
         super().__init__()
+        if latency_power not in (1, 2):
+            raise ValueError("latency_power must be 1 (A4) or 2 (specified)")
+        self.latency_power = latency_power
         self.blocks = blocks.reset_index(drop=True)
         self.process = process
         self.forecaster = forecaster
@@ -355,7 +361,7 @@ class BatchingEnv(gym.Env):
         # Only the flat fee amortizes; the marginal component is constant per
         # order and would add a constant that dilutes the gradient.
         cost = flat_component_lovelace() / n if n > 0 else 0.0
-        latency = sum(order.latency**2 for order in newly)
+        latency = sum(order.latency**self.latency_power for order in newly)
         slip = sum(order.slippage for order in newly)
 
         penalty = (
@@ -408,7 +414,9 @@ def calibrate_weights(env_factory, episodes: int = 3, seed: int = 0) -> RewardWe
 
             newly = env.settled[before:]
             totals["cost"] += flat_component_lovelace() / n if n > 0 else 0.0
-            totals["latency"] += sum(o.latency**2 for o in newly)
+            # Normalise the latency term the env will actually charge, so A4's
+            # linear penalty is calibrated to unit scale like the quadratic one.
+            totals["latency"] += sum(o.latency**env.latency_power for o in newly)
             totals["slip"] += sum(o.slippage for o in newly)
         totals["lock"] += 1.0
 
