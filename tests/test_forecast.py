@@ -11,7 +11,13 @@ from batcher.data.collector import collect_blocks, finalise, records_to_frame
 from batcher.data.features import build_features, preprocess
 from batcher.eval.plots import anticipation_diagnostic
 from batcher.forecast.base import CachedForecaster, clip, to_forecast
-from batcher.forecast.baseline import GlobalMean, MovingAverage, Oracle, Persistence
+from batcher.forecast.baseline import (
+    GlobalMean,
+    MeanReverting,
+    MovingAverage,
+    Oracle,
+    Persistence,
+)
 from batcher.forecast.evaluate import leakage_check, score, score_frame
 from batcher.forecast.lgbm import LightGBMForecaster, load
 from conftest import BASE_HEIGHT, FakeSource, make_records
@@ -86,6 +92,44 @@ def test_oracle_is_perfect_by_construction(frame):
 def test_persistence_repeats_the_current_value(frame):
     predictions = Persistence().predict_frame(frame)
     assert np.allclose(predictions[:, 0], frame["fill_pct"].to_numpy())
+
+
+def quieter_block_predicted(predictions: np.ndarray) -> np.ndarray:
+    """P2's test, vectorised: is a later horizon step predicted below the next one?"""
+    return np.minimum(predictions[:, 1], predictions[:, 2]) < predictions[:, 0]
+
+
+def test_mean_reverting_fits_a_persistence_coefficient_on_structured_data():
+    model = MeanReverting(horizon=3).fit(autocorrelated(seed=13).iloc[:1000])
+    assert 0.0 < model.phi < 1.0
+
+
+def test_mean_reverting_decays_from_the_current_block_toward_the_rolling_mean():
+    data = autocorrelated(seed=14)
+    predictions = MeanReverting(horizon=3, phi=0.5).predict_frame(data)
+    level = MovingAverage(horizon=1).predict_frame(data)[:, 0]
+    current = data["fill_pct"].to_numpy()
+
+    assert np.allclose(predictions[:, 0], level + 0.5 * (current - level))
+    gaps = np.abs(predictions - level[:, None])
+    assert (gaps[:, 1] <= gaps[:, 0] + 1e-12).all()
+    assert (gaps[:, 2] <= gaps[:, 1] + 1e-12).all()
+    assert ((predictions >= 0.0) & (predictions <= 1.0)).all()
+
+
+def test_a2_baseline_lets_the_quieter_block_branch_fire_where_e4_cannot():
+    """The confound A2 was re-specified to remove: E4's flat horizon never fires."""
+    data = autocorrelated(seed=15)
+    varying = MeanReverting(horizon=3).fit(data).predict_frame(data)
+    flat = MovingAverage(horizon=3).predict_frame(data)
+
+    assert quieter_block_predicted(varying).mean() > 0.1
+    assert quieter_block_predicted(flat).mean() == 0.0
+
+
+def test_an_unfitted_mean_reverting_forecaster_refuses_to_predict(frame):
+    with pytest.raises(RuntimeError, match="not fitted"):
+        MeanReverting().predict_frame(frame)
 
 
 # --- the Forecast contract ---------------------------------------------------
