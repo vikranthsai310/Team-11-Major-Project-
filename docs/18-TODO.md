@@ -982,6 +982,7 @@ number stays traceable to a script.
 | P6-14 — Chapter 7 | ✅ drafted; T-L5 marked pending |
 | P6-15 — Chapter 8 | ✅ test-split tables at all three rates with CIs, paired-difference table, F5, F6, F8, S1–S6 verdicts, threats to validity; only A3 (retrained) and A4 remain marked pending |
 | P6-16 — Chapter 9 | ✅ G1–G6 marked with test-split evidence; limitations and future work updated |
+| Phase 7 in the report | ◐ §5.11 on-chain design, §6.11–6.13 validators / transaction building / live batcher, §7.5 on-chain and live-mode tests, §8.12 demonstration status, Chapter 9 contribution and limitation. Deployment, T-O6 and the D4 calibration are marked pending in the abstract, Table 7.5 and §8.12 |
 
 Yellow highlights in the document mark every item the team must fill in or confirm:
 member names and roll numbers, HoD name, guide designation, machine

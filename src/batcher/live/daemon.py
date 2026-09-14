@@ -247,7 +247,8 @@ class LiveBatcher:
         steps = tuple(o.step_exunits for o in orders)
 
         # Live forecasting is E4 over recent real blocks: it needs no feature
-        # history, and Phase 3 showed LightGBM adds little the policy can use.
+        # history. Ablation A2 found LightGBM helps P2 on cost, so running it
+        # live, with a maintained feature window, is future work.
         fills = self.chain.recent_fills(FORECAST_WINDOW_K)
         if fills:
             prediction = self.forecaster.predict_frame(pd.DataFrame({"fill_pct": fills}))[-1]
