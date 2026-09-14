@@ -77,9 +77,10 @@ function Code(lines) {
 let tableNo = 0, figNo = 0;
 const chapterOf = () => currentChapter;
 let currentChapter = 0;
-function Caption(kind, text) {
+function Caption(kind, text, keepNext = false) {
   const no = kind === "Table" ? ++tableNo : ++figNo;
   return new Paragraph({
+    keepNext,
     alignment: AlignmentType.CENTER,
     spacing: { before: 60, after: 200 },
     children: [new TextRun({ text: chapterOf() ? `${kind} ${chapterOf()}.${no}: ` : `${kind} ${no}: `, bold: true, font: FONT, size: 22 }), new TextRun({ text, italics: true, font: FONT, size: 22 })],
@@ -109,7 +110,8 @@ function Tbl(caption, headers, rows, widths) {
       ...rows.map((r) => new TableRow({ children: r.map((c, i) => cell(c, i, false)) })),
     ],
   });
-  return [Caption("Table", caption), table, new Paragraph({ children: [], spacing: { after: 160 } })];
+  // A table caption must never be stranded at the foot of a page.
+  return [Caption("Table", caption, true), table, new Paragraph({ children: [], spacing: { after: 160 } })];
 }
 
 function pngSize(file) {
@@ -471,7 +473,7 @@ add(
   P("A batch consumes the pool UTXO and produces a new one. Until the batch confirms, the new pool output does not exist, so a second batch cannot be constructed: at most one batch per pool is in flight. A submitted transaction that does not fit the next block is **not rejected** — it waits in the mempool and is retried against each subsequent block. The real cost of a mistimed submission is therefore **head-of-line blocking**: every order queued behind the in-flight batch waits. Genuine failures come from only three sources: TTL expiry, mempool rejection and rollback. This replaced a “bounce penalty” in the original design that modelled a rejection which does not occur."),
   H2("5.6 Algorithm Design"),
   H3("5.6.1 Forecasters"),
-  P("**E4**, the baseline, predicts the mean fill of the last 20 blocks. **P1**, a LightGBM regressor, uses fill lags 1–20, rolling means and standard deviations over 5, 10 and 20 blocks, slot-gap cadence features, transaction-count lags and hour-of-day encoded as sine and cosine. Data is split chronologically 70/15/15 and never shuffled. A planned LSTM variant was cut on scope grounds once the predictability analysis (Section 8.2) was complete."),
+  P("**E4**, the baseline, predicts the mean fill of the last 20 blocks, repeated across the horizon; a second naive baseline, **E4b**, decays from the current block toward that mean and was added for ablation A2 (Section 8.10). **P1**, a LightGBM regressor, uses fill lags 1–20, rolling means and standard deviations over 5, 10 and 20 blocks, slot-gap cadence features, transaction-count lags and hour-of-day encoded as sine and cosine. Data is split chronologically 70/15/15 and never shuffled. A planned LSTM variant was cut on scope grounds once the predictability analysis (Section 8.2) was complete."),
   H3("5.6.2 P2 — constrained optimizer"),
   ...Code([
     "decide(obs):",
@@ -536,7 +538,7 @@ add(
     "scripts/     collect, verify_dataset, analyze_congestion, train_forecaster,",
     "             tune_baselines, evaluate, train_rl, evaluate_rl,",
     "             final_evaluation, run_stats, make_figures, ...",
-    "tests/       266 tests in 21 files",
+    "tests/       270 tests in 21 files",
   ]),
   P("Every number in this report is produced by a script under `scripts/` that writes a **run manifest** recording the seed, git revision, configuration hash and dataset checksum. No result reaches the report through a notebook."),
   H2("6.2 Protocol Constants Module"),
@@ -602,7 +604,7 @@ add(
 add(
   Chapter(7, "Testing"),
   H2("7.1 Strategy and Coverage"),
-  P("In a research codebase the main danger is not a crash but a **quietly wrong number** that survives into the report. The test suite targets that: every number that reaches the report is produced by code covered by a test that would fail if the number were wrong. The suite contains **266 tests in 21 files**, runs on every push in GitHub Actions, and enforces a minimum of 90 % line coverage; measured coverage is 94 %."),
+  P("In a research codebase the main danger is not a crash but a **quietly wrong number** that survives into the report. The test suite targets that: every number that reaches the report is produced by code covered by a test that would fail if the number were wrong. The suite contains **270 tests in 21 files**, runs on every push in GitHub Actions, and enforces a minimum of 90 % line coverage; measured coverage is 94 %."),
   ...Tbl("Test levels", ["Level", "Scope", "Tooling"], [
     ["Unit", "Estimator, gates, fee, metrics, queue, statistics", "pytest"],
     ["Property", "Invariants that must hold for all inputs", "hypothesis"],
@@ -761,7 +763,7 @@ add(
   H2("8.6 Pareto Analysis"),
   ...Fig(path.join(FIG, "F5_pareto.png"), "F5 — tail latency against per-user cost, test split, matched rate, with 95 % CIs on both axes"),
   P("At the matched rate the static and proposed policies do not collapse onto one line; they spread along a frontier running from greedy (fastest, most expensive) to E1 (cheapest, slowest). **P2 with N_MIN = 4 Pareto-dominates the tuned E2 by median** — 125.0 against 130.5 slots and 127,738 against 129,729 lovelace. Paired, the cost saving is significant (−2,894 lovelace) but the latency difference is not (−5.1 slots, CI [−14.5, +0.5]), so the defensible statement is that P2 is **cheaper and no slower** than E2, not strictly better on both axes. The dominance does not carry to the other rates: at the light rate E2 is 17 slots faster and P2 28,120 lovelace cheaper, and at the heavy rate P2 is 60.5 slots faster but 7,441 lovelace dearer — trade-offs, not dominance."),
-  P("**P3 occupies an operating point no static rule reaches.** Against E1 it is significantly faster at every rate (23.2 slots at matched) for a modest extra cost (6,884 lovelace); against E2 it is 40,500 lovelace cheaper for 35.8 more slots. Nothing dominates it at the light or matched rate. The ORACLE point sits almost on top of P2: a perfect next-block forecast is worth 1 slot at the matched rate and nothing measurable at the heavy rate — the fourth independent confirmation that forecasting congestion has little to offer on this chain."),
+  P("**P3 occupies an operating point no static rule reaches.** Against E1 it is significantly faster at every rate (23.2 slots at matched) for a modest extra cost (6,884 lovelace); against E2 it is 40,500 lovelace cheaper for 35.8 more slots. Nothing dominates it at the light or matched rate. The ORACLE point sits almost on top of P2: a perfect next-block forecast is worth 1 slot at the matched rate and nothing measurable at the heavy rate — the fourth independent confirmation that forecasting congestion has little to offer *latency* on this chain. Ablation A2 (Section 8.10) shows where a forecast does matter: in how cheaply P2 can buy larger batches."),
   P("The comparison of P3 against the whole P2 sweep below was made on validation; configurations N = 8, 12 and 20 were not carried into the one-shot test run, so that claim is not re-tested here."),
   ...Tbl("P3 (DQN) against the P2 frontier, validation split", ["Policy", "L-p95 (slots)", "C-user (lovelace)"], [
     ["e3(greedy) ≡ p2(N=1)", "114.0", "150,168"], ["p2(N=4)", "121.5", "116,759"], ["p2(N=8)", "131.0", "102,729"],
@@ -787,8 +789,33 @@ add(
     ["4", "127.0", "126.0", "0.8 %"], ["8", "142.0", "134.0", "5.6 %"], ["12", "156.0", "143.0", "8.3 %"], ["20", "165.0", "151.0", "8.5 %"],
   ], [2000, 2400, 2400, 2200]),
   P("A perfect forecast is worth 5–9 % of tail latency at equal cost, and the gap widens as the policy leans on the forecast."),
-  H3("A2 — moving-average versus learned forecaster"),
-  P("As specified, A2 is confounded. P2 driven by E4 is identical to greedy at every N_MIN, because a moving average is flat across the forecast horizon, so the “quieter block predicted” condition can never fire. A2 therefore compares a horizon-varying forecast with a flat one rather than a strong forecast with a weak one; answering the intended question needs a naive baseline that varies across the horizon. This is reported as an open item rather than reinterpreted."),
+  H3("A2 — naive versus learned forecaster, re-specified"),
+  P("As first run, A2 was confounded. P2 driven by E4 was identical to greedy at every N_MIN, because a moving average is flat across the forecast horizon and the “quieter block predicted” condition compares equal numbers, so it never fires. That compared a flat forecast with a varying one, not a naive forecast with a learned one."),
+  P("A2 was therefore re-specified with a second naive baseline, **E4b (mean-reverting)**: `fill_hat(t+h) = m_t + φ^h · (fill_t − m_t)`, where `m_t` is E4’s 20-block rolling mean and φ the lag-1 autocorrelation of the deviation from it, fitted on the training split. It is as naive as E4 — one fitted number — but varies across the horizon. The configuration was committed before the run, and it used the same 12 validation episodes at the matched rate as the original Phase 4 ablations."),
+  ...Tbl("Forecasters on the validation split — whether each can make P2’s quieter-block branch fire", ["Forecaster", "Branch fires", "MAE t+1", "Directional accuracy"], [
+    ["E4 moving average (flat)", "**0.0 %**", "0.0586", "0.712"],
+    ["E4b mean-reverting (φ = 0.084)", "36.2 %", "0.0582", "0.712"],
+    ["P1 LightGBM", "67.4 %", "**0.0530**", "**0.740**"],
+    ["ORACLE", "64.7 %", "0", "1.000"],
+  ], [3300, 1900, 1900, 1900]),
+  P("The zero for E4 confirms the confound directly. The fitted φ is small — deviations from the recent level barely persist — so E4b’s forecasts stay close to the level, but they still vary enough for the branch to fire on about a third of blocks."),
+  ...Tbl("P2 by forecaster across N_MIN — median over 12 paired validation episodes (L-p95 slots / C-user lovelace)", ["N_MIN", "E4b naive", "P1 LightGBM", "ORACLE", "E4 flat"], [
+    ["1", "120.5 / 151,557", "120.5 / 151,557", "120.0 / 151,557", "120.5 / 151,557"],
+    ["4", "123.5 / 137,596", "127.0 / 120,945", "124.5 / 120,608", "120.5 / 151,557"],
+    ["8", "134.3 / 127,523", "142.5 / 108,672", "135.0 / 108,217", "120.5 / 151,557"],
+    ["12", "143.4 / 124,229", "156.5 / 103,841", "143.5 / 103,184", "120.5 / 151,557"],
+    ["20", "149.5 / 122,915", "165.5 / 101,747", "148.5 / 101,064", "120.5 / 151,557"],
+  ], [1000, 2000, 2000, 2000, 2000]),
+  ...Tbl("A2 — P2 on LightGBM minus P2 on E4b, paired over 12 episodes, Holm–Bonferroni across the family", ["N_MIN", "L-p95 difference [95 % CI]", "C-user difference [95 % CI]"], [
+    ["1", "0.0 [0.0, 0.0]", "0 [0, 0]"],
+    ["4", "+2.0 [+1.5, +3.0] *", "−17,186 [−20,785, −14,489] *"],
+    ["8", "+7.2 [+6.0, +9.0] *", "−21,348 [−25,858, −17,395] *"],
+    ["12", "+13.0 [+10.4, +15.7] *", "−22,582 [−27,817, −18,148] *"],
+    ["20", "+15.0 [+12.0, +18.5] *", "−23,332 [−28,872, −18,627] *"],
+  ], [1400, 3800, 3800]),
+  P("**At equal N_MIN the two forecasters do not produce a better and a worse policy; they produce different operating points.** LightGBM lets the branch fire about twice as often, so P2 waits more, builds batches 26–47 % larger, and trades 2–15 slots of tail latency for 17,000–23,000 lovelace less per user — every difference significant. Equal N_MIN is therefore not a like-for-like comparison, and the question A2 asks is answered by the frontier instead."),
+  P("**On the frontier, the learned forecaster helps the policy.** LightGBM at N_MIN = 4 (127.0 slots, 120,945 lovelace) is at least as fast and cheaper than E4b at N_MIN = 8, 12 and 20, so it dominates three of E4b’s five points; no LightGBM point is dominated by E4b. E4b cannot reach below about 123,000 lovelace at any setting, because its weak reversion rarely justifies a long wait, while LightGBM reaches 101,747. LightGBM also matches ORACLE on per-user cost at every N_MIN, to within 0.7 %; its gap to ORACLE is in tail latency (up to 17 slots at N_MIN = 20), consistent with the lagging forecast of F4."),
+  P("The answer to A2 is therefore **yes, but only for cost**: a learned forecaster lets P2 buy larger batches more cheaply than a naive one, while contributing nothing to latency — the same division A1, A3 and the test-split ORACLE gap each point to. The frontier comparison rests on medians over 12 validation episodes and is descriptive; the equal-N_MIN paired tests are the formal result."),
   H3("A3 and A4 — agent ablations"),
   P("Both ablations retrain five DQN seeds from scratch with the Phase 5 configuration — 200,000 steps, the same training windows and reward calibration — changing one thing each: **A3** removes the forecast from the state (the three `fill_hat` inputs are constant zero), and **A4** replaces the quadratic latency penalty with a linear one, recalibrated to unit scale. All ten agents are scored through the standard metric path on the same four validation episodes as Phase 5; the test split is not used again."),
   ...Tbl("Ablations A3 and A4 against the Phase 5 agent, per seed, validation split", ["Seed", "L-p95 P3", "L-p95 A3", "L-p95 A4", "C-user P3", "C-user A3", "C-user A4"], [
