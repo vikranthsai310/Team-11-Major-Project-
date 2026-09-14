@@ -1,0 +1,83 @@
+{
+  "compared_metrics": [
+    "l_mean",
+    "l_p95",
+    "c_user",
+    "x_rate",
+    "batch_n",
+    "lock",
+    "violations",
+    "action_entropy"
+  ],
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "created_utc": "2026-09-14T13:38:40+00:00",
+  "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "experiment_id": "phase6-checkpoint-reproducibility",
+  "git": {
+    "dirty": false,
+    "sha": "d171038217689881f0ab1ac9554b01550e3edcd2"
+  },
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "passed": true,
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "recorded_from": "experiments\\phase5-evaluation",
+  "recorded_git": {
+    "dirty": true,
+    "sha": "dd97e2b987b5f2165af3ce48eb60ed620ffeec84"
+  },
+  "results": {
+    "0": {
+      "differences": {},
+      "identical": true
+    },
+    "1": {
+      "differences": {},
+      "identical": true
+    },
+    "2": {
+      "differences": {},
+      "identical": true
+    },
+    "3": {
+      "differences": {},
+      "identical": true
+    },
+    "4": {
+      "differences": {},
+      "identical": true
+    }
+  },
+  "seed": 42
+}

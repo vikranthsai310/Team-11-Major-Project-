@@ -1,0 +1,367 @@
+{
+  "agent_forecaster": "none",
+  "checkpoints": "phase6-a3-seed",
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "created_utc": "2026-09-14T14:11:45+00:00",
+  "dataset_checksum": "48cd6f8b9a9ee92fb513f0db27936ea77ed9ec1c7907042218412c3840527c00",
+  "episodes": 4,
+  "experiment_id": "phase6-ablation-a3",
+  "git": {
+    "dirty": true,
+    "sha": "d171038217689881f0ab1ac9554b01550e3edcd2"
+  },
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "per_seed": {
+    "0": {
+      "action_entropy": 0.4352999758876391,
+      "batch_n": 10.565887282065145,
+      "c_user": 97643.23723085155,
+      "collapsed": false,
+      "congestion_profile": {
+        "1": {
+          "mean_batch_n": 4.814814814814815,
+          "n": 798,
+          "submit_rate": 0.10150375939849623
+        },
+        "2": {
+          "mean_batch_n": 4.8352941176470585,
+          "n": 401,
+          "submit_rate": 0.2119700748129676
+        },
+        "3": {
+          "mean_batch_n": 4.555555555555555,
+          "n": 399,
+          "submit_rate": 0.20300751879699247
+        },
+        "4": {
+          "mean_batch_n": 4.491803278688525,
+          "n": 400,
+          "submit_rate": 0.305
+        },
+        "5": {
+          "mean_batch_n": 4.496503496503497,
+          "n": 400,
+          "submit_rate": 0.3575
+        },
+        "6": {
+          "mean_batch_n": 4.935483870967742,
+          "n": 399,
+          "submit_rate": 0.38847117794486213
+        },
+        "7": {
+          "mean_batch_n": 4.221476510067114,
+          "n": 399,
+          "submit_rate": 0.37343358395989973
+        },
+        "8": {
+          "mean_batch_n": 3.92896174863388,
+          "n": 400,
+          "submit_rate": 0.4575
+        },
+        "9": {
+          "mean_batch_n": 2.3705357142857144,
+          "n": 400,
+          "submit_rate": 0.56
+        }
+      },
+      "l_mean": 72.57664778305517,
+      "l_p95": 134.5,
+      "lock": 0.31852319467134627,
+      "violations": 0,
+      "x_rate": 0.0
+    },
+    "1": {
+      "action_entropy": 0.5655509364363202,
+      "batch_n": 11.979251487629188,
+      "c_user": 88196.97999408303,
+      "collapsed": false,
+      "congestion_profile": {
+        "1": {
+          "mean_batch_n": 5.016129032258065,
+          "n": 800,
+          "submit_rate": 0.155
+        },
+        "2": {
+          "mean_batch_n": 6.02,
+          "n": 399,
+          "submit_rate": 0.2506265664160401
+        },
+        "3": {
+          "mean_batch_n": 6.347368421052631,
+          "n": 400,
+          "submit_rate": 0.2375
+        },
+        "4": {
+          "mean_batch_n": 7.017857142857143,
+          "n": 399,
+          "submit_rate": 0.2807017543859649
+        },
+        "5": {
+          "mean_batch_n": 5.471544715447155,
+          "n": 400,
+          "submit_rate": 0.3075
+        },
+        "6": {
+          "mean_batch_n": 4.033333333333333,
+          "n": 400,
+          "submit_rate": 0.375
+        },
+        "7": {
+          "mean_batch_n": 3.046153846153846,
+          "n": 399,
+          "submit_rate": 0.3258145363408521
+        },
+        "8": {
+          "mean_batch_n": 3.423841059602649,
+          "n": 400,
+          "submit_rate": 0.3775
+        },
+        "9": {
+          "mean_batch_n": 4.323076923076923,
+          "n": 400,
+          "submit_rate": 0.325
+        }
+      },
+      "l_mean": 99.25921481557788,
+      "l_p95": 170.0,
+      "lock": 0.2883701285990041,
+      "violations": 0,
+      "x_rate": 0.0
+    },
+    "2": {
+      "action_entropy": 0.3561184047417238,
+      "batch_n": 14.176035656738915,
+      "c_user": 82843.28525780136,
+      "collapsed": false,
+      "congestion_profile": {
+        "1": {
+          "mean_batch_n": 3.6666666666666665,
+          "n": 798,
+          "submit_rate": 0.06390977443609022
+        },
+        "2": {
+          "mean_batch_n": 2.2653061224489797,
+          "n": 401,
+          "submit_rate": 0.12219451371571072
+        },
+        "3": {
+          "mean_batch_n": 3.0,
+          "n": 399,
+          "submit_rate": 0.12531328320802004
+        },
+        "4": {
+          "mean_batch_n": 3.6547619047619047,
+          "n": 399,
+          "submit_rate": 0.21052631578947367
+        },
+        "5": {
+          "mean_batch_n": 3.0306122448979593,
+          "n": 400,
+          "submit_rate": 0.245
+        },
+        "6": {
+          "mean_batch_n": 2.8878504672897196,
+          "n": 399,
+          "submit_rate": 0.2681704260651629
+        },
+        "7": {
+          "mean_batch_n": 3.5478260869565217,
+          "n": 400,
+          "submit_rate": 0.2875
+        },
+        "8": {
+          "mean_batch_n": 3.6785714285714284,
+          "n": 399,
+          "submit_rate": 0.3508771929824561
+        },
+        "9": {
+          "mean_batch_n": 4.7243589743589745,
+          "n": 400,
+          "submit_rate": 0.39
+        }
+      },
+      "l_mean": 90.44080311334105,
+      "l_p95": 156.54999999999995,
+      "lock": 0.2116446599553777,
+      "violations": 0,
+      "x_rate": 0.0
+    },
+    "3": {
+      "action_entropy": 0.5648629218389966,
+      "batch_n": 12.924692348849653,
+      "c_user": 85285.2633923481,
+      "collapsed": false,
+      "congestion_profile": {
+        "1": {
+          "mean_batch_n": 2.318840579710145,
+          "n": 800,
+          "submit_rate": 0.08625
+        },
+        "2": {
+          "mean_batch_n": 2.1774193548387095,
+          "n": 399,
+          "submit_rate": 0.15538847117794485
+        },
+        "3": {
+          "mean_batch_n": 2.4805194805194803,
+          "n": 400,
+          "submit_rate": 0.1925
+        },
+        "4": {
+          "mean_batch_n": 2.7951807228915664,
+          "n": 399,
+          "submit_rate": 0.20802005012531327
+        },
+        "5": {
+          "mean_batch_n": 2.4745762711864407,
+          "n": 400,
+          "submit_rate": 0.295
+        },
+        "6": {
+          "mean_batch_n": 2.4958677685950414,
+          "n": 400,
+          "submit_rate": 0.3025
+        },
+        "7": {
+          "mean_batch_n": 3.024793388429752,
+          "n": 399,
+          "submit_rate": 0.3032581453634085
+        },
+        "8": {
+          "mean_batch_n": 2.9452054794520546,
+          "n": 400,
+          "submit_rate": 0.365
+        },
+        "9": {
+          "mean_batch_n": 3.3125,
+          "n": 400,
+          "submit_rate": 0.36
+        }
+      },
+      "l_mean": 85.75278394555939,
+      "l_p95": 153.9749999999999,
+      "lock": 0.24568937074978578,
+      "violations": 0,
+      "x_rate": 0.0
+    },
+    "4": {
+      "action_entropy": 0.49214000652488904,
+      "batch_n": 13.656288580246915,
+      "c_user": 83146.97533950757,
+      "collapsed": false,
+      "congestion_profile": {
+        "1": {
+          "mean_batch_n": 6.101449275362318,
+          "n": 798,
+          "submit_rate": 0.08646616541353383
+        },
+        "2": {
+          "mean_batch_n": 8.426229508196721,
+          "n": 401,
+          "submit_rate": 0.15211970074812967
+        },
+        "3": {
+          "mean_batch_n": 7.079365079365079,
+          "n": 399,
+          "submit_rate": 0.15789473684210525
+        },
+        "4": {
+          "mean_batch_n": 7.681318681318682,
+          "n": 399,
+          "submit_rate": 0.22807017543859648
+        },
+        "5": {
+          "mean_batch_n": 5.771428571428571,
+          "n": 400,
+          "submit_rate": 0.2625
+        },
+        "6": {
+          "mean_batch_n": 5.284552845528455,
+          "n": 399,
+          "submit_rate": 0.3082706766917293
+        },
+        "7": {
+          "mean_batch_n": 5.641025641025641,
+          "n": 400,
+          "submit_rate": 0.2925
+        },
+        "8": {
+          "mean_batch_n": 4.3088235294117645,
+          "n": 399,
+          "submit_rate": 0.3408521303258145
+        },
+        "9": {
+          "mean_batch_n": 3.857142857142857,
+          "n": 400,
+          "submit_rate": 0.3675
+        }
+      },
+      "l_mean": 97.57901214262884,
+      "l_p95": 160.5,
+      "lock": 0.2275240389563819,
+      "violations": 0,
+      "x_rate": 0.0
+    }
+  },
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "seed": 42,
+  "split": "val",
+  "summary": {
+    "batch_n": {
+      "mean": 12.660431071105965,
+      "std": 1.2813854042070123
+    },
+    "c_user": {
+      "mean": 87423.14824291831,
+      "std": 5456.746022988263
+    },
+    "l_mean": {
+      "mean": 89.12169236003247,
+      "std": 9.603371455697747
+    },
+    "l_p95": {
+      "mean": 155.10499999999996,
+      "std": 11.6524503860776
+    },
+    "lock": {
+      "mean": 0.25835027858637916,
+      "std": 0.03953211776170427
+    },
+    "x_rate": {
+      "mean": 0.0,
+      "std": 0.0
+    }
+  }
+}
