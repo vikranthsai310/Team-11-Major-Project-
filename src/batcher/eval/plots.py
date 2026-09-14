@@ -359,6 +359,193 @@ def figure_f4(
 
 
 SUBMIT_GREEN = "#0ca30c"
+P2_ORANGE = "#eb6834"
+STATIC_AQUA = "#1baf7a"
+
+# Fixed series assignment (docs/17-UI-SPEC.md B1): a policy keeps its colour in
+# every figure. Statics share one hue and are told apart by direct labels.
+SERIES = {
+    "p3(dqn)": SERIES_BLUE,
+    "p2(D=120,N=4)": P2_ORANGE,
+    "p2(D=120,N=1)": P2_ORANGE,
+    "e1(M=16)": STATIC_AQUA,
+    "e2(T=20)": STATIC_AQUA,
+    "e3(greedy)": STATIC_AQUA,
+    "oracle(D=120,N=4)": MUTED,
+    "null": MUTED,
+}
+
+
+def figure_f5(points: pd.DataFrame, out_dir: Path, provenance: str = "") -> dict[str, Path]:
+    """F5 · Pareto scatter of L-p95 against C-user — the headline figure.
+
+    ``points`` needs one row per policy: ``policy, l_p95, l_p95_lo, l_p95_hi,
+    c_user, c_user_lo, c_user_hi``. Every point is directly labelled; ORACLE and
+    NULL are hollow references. Both axes are lower-is-better. The split is named in
+    the provenance line, never in the title, so a validation render cannot carry a
+    test-split caption.
+    """
+    apply_style()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    figure, axis = plt.subplots(figsize=(8, 5.2))
+
+    # Policies that land on the same point (p2 at N_MIN=1 is byte-identical to
+    # greedy) would print one label over another. They share a single label.
+    labels: dict[tuple[float, float], list[str]] = {}
+    for record in points.to_dict("records"):
+        key = (round(record["c_user"], 0), round(record["l_p95"], 1))
+        labels.setdefault(key, []).append(record["policy"])
+
+    for (c_user, l_p95), names in labels.items():
+        axis.annotate(
+            " ≡ ".join(names),
+            (c_user, l_p95),
+            xytext=(6, 5),
+            textcoords="offset points",
+            fontsize=7.5,
+            color=INK_SECONDARY,
+        )
+
+    for record in points.to_dict("records"):
+        name = record["policy"]
+        colour = SERIES.get(name, INK_SECONDARY)
+        reference = name.startswith(("oracle", "null"))
+        axis.errorbar(
+            record["c_user"],
+            record["l_p95"],
+            xerr=[
+                [record["c_user"] - record["c_user_lo"]],
+                [record["c_user_hi"] - record["c_user"]],
+            ],
+            yerr=[[record["l_p95"] - record["l_p95_lo"]], [record["l_p95_hi"] - record["l_p95"]]],
+            fmt="o",
+            ms=7,
+            color=colour,
+            mfc="none" if reference else colour,
+            ls="none",
+            elinewidth=1,
+            capsize=2,
+            alpha=0.9,
+        )
+
+    axis.set_xlabel("per-user cost, lovelace  (← better)")
+    axis.set_ylabel("L-p95 confirmation latency, slots  (← better)")
+    axis.set_title("F5 · Tail latency against per-user cost", loc="left")
+    _provenance(figure, provenance)
+    figure.tight_layout()
+
+    paths = {"figure": out_dir / "F5_pareto.png"}
+    figure.savefig(paths["figure"], bbox_inches="tight")
+    plt.close(figure)
+    paths["table"] = out_dir.parent / "tables" / "F5_pareto.csv"
+    paths["table"].parent.mkdir(parents=True, exist_ok=True)
+    points.to_csv(paths["table"], index=False)
+    return paths
+
+
+def figure_f6(latencies: pd.DataFrame, out_dir: Path, provenance: str = "") -> dict[str, Path]:
+    """F6 · Latency CDF — where in the distribution any gain lives.
+
+    A CDF, not a histogram: the question is about quantiles. At most four series
+    plus the reference, per the series cap. A horizontal rule marks 0.95 and each
+    curve's crossing is labelled, so the p95 reading needs no squinting.
+    """
+    apply_style()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    shown = ["p3(dqn)", "p2(D=120,N=4)", "e2(T=20)", "e3(greedy)"]
+    figure, axis = plt.subplots(figsize=(8, 4.6))
+
+    styles = {"e2(T=20)": "-", "e3(greedy)": ":"}
+    crossings = []
+    for name in shown:
+        values = np.sort(latencies.loc[latencies["policy"] == name, "latency"].to_numpy())
+        if values.size == 0:
+            continue
+        cdf = np.arange(1, values.size + 1) / values.size
+        axis.plot(values, cdf, lw=1.8, ls=styles.get(name, "-"), color=SERIES[name], label=name)
+        p95 = float(np.percentile(values, 95))
+        crossings.append((name, p95))
+        axis.plot(p95, 0.95, "o", ms=4, color=SERIES[name])
+
+    axis.axhline(0.95, color=MUTED, lw=0.8, ls="--")
+    # Crossings that sit close together would print on top of each other, so each
+    # label steps down only when it is near the previous one.
+    last_x, level = None, 0
+    for name, p95 in sorted(crossings, key=lambda c: c[1]):
+        level = level + 1 if last_x is not None and p95 - last_x < 12 else 0
+        axis.annotate(
+            f"p95 {p95:.0f}",
+            (p95, 0.95),
+            xytext=(4, -12 - 11 * level),
+            textcoords="offset points",
+            fontsize=7,
+            color=SERIES[name],
+        )
+        last_x = p95
+
+    axis.set_xlabel("confirmation latency, slots")
+    axis.set_ylabel("share of settled orders")
+    axis.set_ylim(0, 1.01)
+    axis.set_title("F6 · Latency distribution, matched arrival rate", loc="left")
+    axis.legend(loc="lower right", frameon=False, fontsize=8)
+    _provenance(figure, provenance)
+    figure.tight_layout()
+
+    paths = {"figure": out_dir / "F6_latency_cdf.png"}
+    figure.savefig(paths["figure"], bbox_inches="tight")
+    plt.close(figure)
+    paths["table"] = out_dir.parent / "tables" / "F6_latency_quantiles.csv"
+    paths["table"].parent.mkdir(parents=True, exist_ok=True)
+    (
+        latencies.groupby("policy")["latency"]
+        .quantile([0.5, 0.9, 0.95, 0.99])
+        .unstack()
+        .to_csv(paths["table"])
+    )
+    return paths
+
+
+def figure_f8(summary: pd.DataFrame, out_dir: Path, provenance: str = "") -> dict[str, Path]:
+    """F8 · Robustness across arrival rates — three panels on ONE shared y-scale.
+
+    Per-panel scales would let a policy look consistent while its absolute
+    latency tripled. ``summary`` needs ``rate, policy, l_p95, l_p95_lo, l_p95_hi``.
+    """
+    apply_style()
+    out_dir.mkdir(parents=True, exist_ok=True)
+    rates = ["light", "matched", "heavy"]
+    shown = ["e3(greedy)", "e2(T=20)", "e1(M=16)", "p2(D=120,N=4)", "p3(dqn)"]
+
+    figure, axes = plt.subplots(1, 3, figsize=(10, 4.2), sharey=True)
+    for axis, rate in zip(axes, rates, strict=True):
+        subset = summary[(summary["rate"] == rate) & (summary["policy"].isin(shown))]
+        subset = subset.set_index("policy").reindex(shown).dropna(how="all").reset_index()
+        x = np.arange(len(subset))
+        axis.bar(
+            x,
+            subset["l_p95"],
+            yerr=[subset["l_p95"] - subset["l_p95_lo"], subset["l_p95_hi"] - subset["l_p95"]],
+            color=[SERIES.get(p, MUTED) for p in subset["policy"]],
+            ecolor=INK_SECONDARY,
+            error_kw={"elinewidth": 1},
+            capsize=2,
+            width=0.7,
+        )
+        axis.set_xticks(x)
+        axis.set_xticklabels(subset["policy"], rotation=40, ha="right", fontsize=7)
+        axis.set_title(rate, fontsize=9, color=INK_SECONDARY, loc="left")
+    axes[0].set_ylabel("L-p95, slots")
+    figure.suptitle("F8 · Tail latency across arrival rates (shared scale)", x=0.01, ha="left")
+    _provenance(figure, provenance)
+    figure.tight_layout()
+
+    paths = {"figure": out_dir / "F8_robustness.png"}
+    figure.savefig(paths["figure"], bbox_inches="tight")
+    plt.close(figure)
+    paths["table"] = out_dir.parent / "tables" / "F8_robustness.csv"
+    paths["table"].parent.mkdir(parents=True, exist_ok=True)
+    summary.to_csv(paths["table"], index=False)
+    return paths
 
 
 def figure_f7(profile: dict, out_dir: Path, provenance: str = "") -> dict[str, Path]:

@@ -862,6 +862,44 @@ Future work: transaction chaining, joint forecaster-and-policy training, multi-p
 Write `scripts/reproduce.py --manifest experiments/<id>/manifest.json`: restore the seed, verify the dataset checksum, check out the recorded git SHA if it differs, re-run.
 **Done when** — a reader can reproduce every figure from the repository, a seed and a dataset checksum, bit-identically (NFR-3). A mismatch is a defect to file, not to work around.
 
+### Ablation A5 — estimation error against Gate A (P6-9) ✅
+
+`scripts/ablation_a5.py`, validation split, heavy rate (where batches approach the
+cap), 21,359 batches.
+
+| True cost vs estimate | Real Gate A cap | Invalid batches |
+|---|---|---|
+| −10 %, −5 %, 0 % | 24 | 0 |
+| **+5 %** | 22 | **8.1 %** |
+| **+10 %** | 21 | **8.2 %** |
+
+**S2's zero is exact only under assumption A4 (perfect estimation).** Over-estimation
+is harmless, but a 5 % *under*-estimate already invalidates about one batch in
+twelve, because heavy-rate batches sit at the cap. A **safety margin of 3 orders**
+below the estimated cap would have kept every batch valid, and should be applied in
+live operation until P7-9 calibrates the estimator against real preprod
+transactions. Recall V4 already found the fee side under-estimating
+script-bearing transactions by ~29 %, so this direction of error is not
+hypothetical.
+
+### ⚠ Reproducibility gap found by `reproduce.py` (P6-17)
+
+Run against `experiments/phase3-forecaster/manifest.json`, the checker passed the
+dataset checksum and the config hash but **failed the git revision and the
+clean-tree check**: the manifest records `2b82e64`, a commit from before the
+forecaster code existed, and a dirty working tree.
+
+The cause is procedural and applies to every manifest written so far: each
+experiment was run from uncommitted code and committed afterwards, so the SHA a
+manifest records is the *parent* of the code that produced it. The dataset and
+parameters are pinned; the exact code is not.
+
+**Fix going forward:** commit, then run, so every manifest records the SHA of the
+code that produced it and `dirty: false`. The Phase 6 test evaluation already
+running was launched from an uncommitted tree too, so it carries the same gap and
+must be stated as such rather than silently re-run — re-running would spend the
+test split a second time, which is the worse violation of the two.
+
 ### ✅ Phase 6 exit gate
 - [ ] Every claim in the report traceable to a metric with a confidence interval
 - [ ] Test split used exactly once, with a written record

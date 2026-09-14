@@ -1,0 +1,106 @@
+[
+  {
+    "error": -0.1,
+    "policy": "e3(greedy)",
+    "true_cap": 24,
+    "violating_sizes": [],
+    "batches": 21359,
+    "invalid_batches": 0,
+    "invalid_share": 0.0
+  },
+  {
+    "error": -0.1,
+    "policy": "p2(D=120,N=4)",
+    "true_cap": 24,
+    "violating_sizes": [],
+    "batches": 21359,
+    "invalid_batches": 0,
+    "invalid_share": 0.0
+  },
+  {
+    "error": -0.05,
+    "policy": "e3(greedy)",
+    "true_cap": 24,
+    "violating_sizes": [],
+    "batches": 21359,
+    "invalid_batches": 0,
+    "invalid_share": 0.0
+  },
+  {
+    "error": -0.05,
+    "policy": "p2(D=120,N=4)",
+    "true_cap": 24,
+    "violating_sizes": [],
+    "batches": 21359,
+    "invalid_batches": 0,
+    "invalid_share": 0.0
+  },
+  {
+    "error": 0.0,
+    "policy": "e3(greedy)",
+    "true_cap": 24,
+    "violating_sizes": [],
+    "batches": 21359,
+    "invalid_batches": 0,
+    "invalid_share": 0.0
+  },
+  {
+    "error": 0.0,
+    "policy": "p2(D=120,N=4)",
+    "true_cap": 24,
+    "violating_sizes": [],
+    "batches": 21359,
+    "invalid_batches": 0,
+    "invalid_share": 0.0
+  },
+  {
+    "error": 0.05,
+    "policy": "e3(greedy)",
+    "true_cap": 22,
+    "violating_sizes": [
+      23,
+      24
+    ],
+    "batches": 21359,
+    "invalid_batches": 1726,
+    "invalid_share": 0.08080902663982396
+  },
+  {
+    "error": 0.05,
+    "policy": "p2(D=120,N=4)",
+    "true_cap": 22,
+    "violating_sizes": [
+      23,
+      24
+    ],
+    "batches": 21359,
+    "invalid_batches": 1726,
+    "invalid_share": 0.08080902663982396
+  },
+  {
+    "error": 0.1,
+    "policy": "e3(greedy)",
+    "true_cap": 21,
+    "violating_sizes": [
+      22,
+      23,
+      24
+    ],
+    "batches": 21359,
+    "invalid_batches": 1756,
+    "invalid_share": 0.08221358677840723
+  },
+  {
+    "error": 0.1,
+    "policy": "p2(D=120,N=4)",
+    "true_cap": 21,
+    "violating_sizes": [
+      22,
+      23,
+      24
+    ],
+    "batches": 21359,
+    "invalid_batches": 1756,
+    "invalid_share": 0.08221358677840723
+  }
+]

@@ -18,6 +18,9 @@ dependencies = [
     "lightgbm>=4.3,<5",
     # Required by lightgbm.sklearn (LGBMRegressor, early stopping callbacks).
     "scikit-learn>=1.4,<2",
+    # Wilcoxon signed-rank for the paired evaluation. Declared directly rather
+    # than relied on transitively, since the reported p-values depend on it.
+    "scipy>=1.11,<2",
     "torch>=2.3,<3",
     "gymnasium>=1.0,<2",
     "stable-baselines3>=2.4,<3",
