@@ -643,6 +643,14 @@ $("#live-refresh").addEventListener("click", () => Live.refresh());
 
 /* ---------- start ---------- */
 if (typeof FX !== "undefined") FX.fibers($("#fibers"));
+// when the intro hands over, replay the entrance of whichever page is showing
+addEventListener("intro:done", () => {
+  if (typeof FX === "undefined") return;
+  const active = document.querySelector(".tab[data-active]");
+  FX.moveIndicator();
+  FX.scramble(active && active.querySelector(".scramble"));
+});
+$("#replay-intro").addEventListener("click", () => { location.href = `${location.pathname}?intro`; });
 const initial = (location.hash || "#how").slice(1);
 showTab(["how", "run", "compare", "live"].includes(initial) ? initial : "how");
 Run.ensure(); // start preparing replay data now, so Run is ready by the time it is opened

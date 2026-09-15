@@ -215,7 +215,9 @@ const FX = (() => {
     }
 
     function loop(now) {
-      frame(now);
+      // the intro covers the hero while it plays; don't draw underneath it
+      if (!document.body.classList.contains("intro-playing")) frame(now);
+      else last = now;
       raf = requestAnimationFrame(loop);
     }
     function sync() {
