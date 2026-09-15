@@ -134,7 +134,7 @@ const FX = (() => {
     // on the data pages the strands move between two signature shapes as the page scrolls,
     // and sit dimmer behind the tables and charts
     const ROUTES = { run: [1, 2], compare: [3, 4], live: [2, 1] };
-    const PAGE_DIM = 0.7;
+    const PAGE_DIM = 0.35;
     let w = 0, h = 0, strands = [], pulses = [], orbs = [], stops = [0, 1, 2, 3, 4], page = "how", end = 1;
     let raf = null, last = performance.now(), stage = 0, pageDim = 1, mx = 0, my = 0, mxT = 0, myT = 0;
     const t0 = performance.now();

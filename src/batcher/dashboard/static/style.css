@@ -187,6 +187,7 @@ main, .foot { position: relative; z-index: 1; }
   text-shadow: 0 2px 20px rgba(29, 20, 18, 0.75), 0 0 2px rgba(29, 20, 18, 0.5);
 }
 .hero-copy .grad-text { text-shadow: none; }
+.foot { text-shadow: 0 1px 12px rgba(29, 20, 18, 0.95), 0 0 2px rgba(29, 20, 18, 0.8); }
 
 /* ---------------- sections & cards ---------------- */
 .block { padding-block: clamp(56px, 8vw, 96px) 0; }
