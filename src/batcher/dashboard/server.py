@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import mimetypes
+import sys
 from functools import lru_cache
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -116,7 +117,21 @@ def make_handler(provider: Provider, static_dir: Path = STATIC):
     return Handler
 
 
+class DashboardHTTPServer(ThreadingHTTPServer):
+    daemon_threads = True
+    # On Windows SO_REUSEADDR lets a second process bind a port that is already serving,
+    # and requests then land on either one. Refuse instead, so a duplicate start fails loudly.
+    allow_reuse_address = sys.platform != "win32"
+
+    def handle_error(self, request, client_address):
+        # A browser that reloads or closes a tab mid-response aborts the socket; that is
+        # routine, not a server fault, so it is not printed as a traceback.
+        if isinstance(sys.exc_info()[1], ConnectionError):
+            return
+        super().handle_error(request, client_address)
+
+
 def serve(provider: Provider, host: str = "127.0.0.1", port: int = 8050) -> ThreadingHTTPServer:
     if host not in LOCAL_HOSTS:
         raise ValueError(f"refusing to bind {host!r}: the dashboard is localhost-only")
-    return ThreadingHTTPServer((host, port), make_handler(provider))
+    return DashboardHTTPServer((host, port), make_handler(provider))

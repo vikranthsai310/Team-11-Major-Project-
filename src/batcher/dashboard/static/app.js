@@ -92,10 +92,30 @@ const Run = {
 
   async pollCatalogue() {
     const status = $("#run-status");
-    for (;;) {
+    $("#run-load").disabled = true;
+    if (location.protocol === "file:") {
+      setStatus(status, "This page was opened as a file. Start it with: python scripts/dashboard.py — then use http://127.0.0.1:8050", true);
+      return;
+    }
+    // A failed request is retried rather than treated as final: the browser can open
+    // before the server answers, and a restarted server should be picked up again.
+    for (let failures = 0; ;) {
       let cat;
-      try { cat = await getJSON("/api/catalogue"); } catch (e) { setStatus(status, `Server unreachable: ${e.message}`, true); return; }
-      if (cat.state === "ready") { this.fillSelects(cat); setStatus(status, "Pick a policy and a test day, then Load."); return; }
+      try {
+        cat = await getJSON("/api/catalogue");
+        failures = 0;
+      } catch (e) {
+        failures += 1;
+        setStatus(status, `Waiting for the dashboard server… (${e.message}; retry ${failures})`, failures > 3);
+        await new Promise((r) => setTimeout(r, Math.min(1000 * failures, 5000)));
+        continue;
+      }
+      if (cat.state === "ready") {
+        this.fillSelects(cat);
+        $("#run-load").disabled = false;
+        setStatus(status, "Pick a policy and a test day, then Load.");
+        return;
+      }
       if (cat.state === "error") { setStatus(status, `Cannot load the dataset — ${cat.message}`, true); return; }
       setStatus(status, `Preparing replay data… ${cat.message || ""} (about a minute, once)`);
       await new Promise((r) => setTimeout(r, 1500));
@@ -599,3 +619,4 @@ $("#live-refresh").addEventListener("click", () => Live.refresh());
 /* ---------- start ---------- */
 const initial = (location.hash || "#how").slice(1);
 showTab(["how", "run", "compare", "live"].includes(initial) ? initial : "how");
+Run.ensure(); // start preparing replay data now, so Run is ready by the time it is opened

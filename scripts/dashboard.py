@@ -37,9 +37,17 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     library = EpisodeLibrary(args.data or find_dataset(), args.models)
-    library.start()
     provider = DashboardProvider(library, LiveSource(), lambda: compare_payload(EVALUATION))
-    server = serve(provider, "127.0.0.1", args.port)
+    try:
+        server = serve(provider, "127.0.0.1", args.port)
+    except OSError:
+        print(
+            f"Port {args.port} is already in use — a dashboard is probably already running.\n"
+            f"Open http://127.0.0.1:{args.port}/ or start another with --port {args.port + 1}",
+            file=sys.stderr,
+        )
+        return 1
+    library.start()
 
     url = f"http://127.0.0.1:{server.server_port}/"
     print(f"Dashboard running at {url}  (Ctrl+C to stop)", flush=True)

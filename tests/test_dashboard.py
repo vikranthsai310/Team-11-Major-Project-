@@ -212,6 +212,12 @@ def test_nothing_outside_the_static_folder_is_served(server):
     assert get(f"{server}/etc/passwd")[0] == 404
 
 
+def test_a_second_dashboard_cannot_take_a_port_already_serving(server):
+    port = int(server.rsplit(":", 1)[1])
+    with pytest.raises(OSError):
+        serve(DashboardProvider(StubLibrary(), live=dict, compare=dict), "127.0.0.1", port)
+
+
 def test_the_dashboard_refuses_to_listen_beyond_localhost():
     with pytest.raises(ValueError, match="localhost-only"):
         serve(DashboardProvider(StubLibrary(), live=dict, compare=dict), "0.0.0.0", 0)
