@@ -4,230 +4,340 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Adaptive Batcher · Team 11</title>
+<meta name="color-scheme" content="dark">
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <span class="logo" aria-hidden="true">◈</span>
-    <div>
-      <div class="brand-title">AI-Driven Adaptive Transaction Batching</div>
-      <div class="brand-sub">Cardano DEX · Team 11 · VBIT</div>
-    </div>
+<header class="nav">
+  <div class="nav-inner">
+    <button class="brand" data-goto="how" aria-label="Adaptive Batcher — overview">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <defs><linearGradient id="bm" x1="0" x2="1"><stop offset="0" stop-color="#f5f3ff"/><stop offset="0.5" stop-color="#a78bfa"/><stop offset="1" stop-color="#6366f1"/></linearGradient></defs>
+        <path d="M3 16 C11 16 14 5 29 3 M3 16 C11 16 15 10 29 10 M3 16 H29 M3 16 C11 16 15 22 29 22 M3 16 C11 16 14 27 29 29" fill="none" stroke="url(#bm)" stroke-width="1.6" stroke-linecap="round"/>
+        <circle cx="3.5" cy="16" r="2.4" fill="#f5f3ff"/>
+      </svg>
+      <span class="brand-text"><b>Adaptive Batcher</b><small>Cardano DEX · Team 11</small></span>
+    </button>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <span class="tab-indicator" aria-hidden="true"></span>
+      <button role="tab" data-tab="how" aria-selected="true">Overview</button>
+      <button role="tab" data-tab="run" aria-selected="false">Simulator</button>
+      <button role="tab" data-tab="compare" aria-selected="false">Results</button>
+      <button role="tab" data-tab="live" aria-selected="false">Live</button>
+    </nav>
+    <button class="btn light nav-cta" data-goto="run">Watch it decide <span class="arrow" aria-hidden="true">→</span></button>
   </div>
-  <nav class="tabs" role="tablist">
-    <button role="tab" data-tab="how" aria-selected="true">How it works</button>
-    <button role="tab" data-tab="run" aria-selected="false">Run</button>
-    <button role="tab" data-tab="compare" aria-selected="false">Results</button>
-    <button role="tab" data-tab="live" aria-selected="false">Live on preprod</button>
-  </nav>
 </header>
 
 <main>
 
-<!-- ============================== HOW IT WORKS ============================== -->
+<!-- ============================== OVERVIEW ============================== -->
 <section id="tab-how" class="tab" data-active>
   <div class="hero">
-    <h1>Batching swaps on Cardano — deciding <em>when</em> and <em>how many</em></h1>
-    <p class="lead">A decentralized exchange keeps each liquidity pool in a single UTXO that only one transaction can spend per block. A <strong>batcher</strong> collects many users’ orders and settles them together. This project decides, block by block, whether to wait or to submit — and proves the decision on real chain data.</p>
-  </div>
-
-  <div class="story">
-    <article class="card step">
-      <div class="step-no">1</div>
-      <h2>Users place orders; the batcher settles them together</h2>
-      <p>A user locks funds at the order contract with their terms: how much to sell and the minimum they will accept. They never talk to the batcher — it finds orders on chain.</p>
-      <svg viewBox="0 0 520 150" class="diagram" role="img" aria-label="Three users send orders to the order contract; the batcher combines them into one transaction against the pool">
-        <g class="d-node"><rect x="10" y="10" width="92" height="30" rx="6"/><text x="56" y="30">User A</text></g>
-        <g class="d-node"><rect x="10" y="60" width="92" height="30" rx="6"/><text x="56" y="80">User B</text></g>
-        <g class="d-node"><rect x="10" y="110" width="92" height="30" rx="6"/><text x="56" y="130">User C</text></g>
-        <g class="d-contract"><rect x="160" y="45" width="120" height="60" rx="8"/><text x="220" y="70">Order</text><text x="220" y="88">contract</text></g>
-        <g class="d-accent"><rect x="330" y="45" width="84" height="60" rx="8"/><text x="372" y="70">Batcher</text><text x="372" y="88">(AI)</text></g>
-        <g class="d-contract"><rect x="450" y="45" width="62" height="60" rx="8"/><text x="481" y="80">Pool</text></g>
-        <path class="d-line" d="M102 25 C135 25 135 65 160 65 M102 75 L160 75 M102 125 C135 125 135 85 160 85 M280 75 L330 75 M414 75 L450 75"/>
-      </svg>
-    </article>
-
-    <article class="card step">
-      <div class="step-no">2</div>
-      <h2>The pool lock: one batch at a time</h2>
-      <p>A submitted batch spends the pool and recreates it. Until it confirms, <strong>no second batch can be built</strong> — every new order waits behind it. That head-of-line blocking is the real cost of a badly timed submission.</p>
-      <svg viewBox="0 0 520 120" class="diagram" role="img" aria-label="A batch in flight locks the pool while the queue of waiting orders grows">
-        <g class="d-warn"><rect x="10" y="35" width="150" height="50" rx="8"/><text x="85" y="57">⏳ Pool LOCKED</text><text x="85" y="74" class="small">batch in flight</text></g>
-        <g class="d-queue">
-          <rect x="200" y="45" width="30" height="30" rx="4"/><rect x="238" y="45" width="30" height="30" rx="4"/><rect x="276" y="45" width="30" height="30" rx="4"/><rect x="314" y="45" width="30" height="30" rx="4"/><rect x="352" y="45" width="30" height="30" rx="4"/>
-        </g>
-        <text x="291" y="100" class="d-caption">orders queue up behind the lock</text>
-        <text x="455" y="65" class="d-caption">→ latency</text>
-      </svg>
-    </article>
-
-    <article class="card step">
-      <div class="step-no">3</div>
-      <h2>Cardano fees don’t rise with demand — so time is the cost</h2>
-      <p>Cardano’s fee is a fixed formula of size and script cost. There is no gas auction. Waiting never makes a transaction cheaper, so the goal is <strong>lower latency and lower cost per user</strong> — not “lower gas fees”.</p>
-      <div class="formula">fee = 44 × size + 155,381 + 0.0577 × memory + 0.0000721 × steps <span>lovelace</span></div>
-      <p class="muted">Batching still saves money: the flat part of the fee is shared by everyone in the batch. Our contract passes that saving to users — each pays <code>network fee ÷ n + margin</code>.</p>
-    </article>
-
-    <article class="card step">
-      <div class="step-no">4</div>
-      <h2>Two different limits — Gate A and Gate B</h2>
-      <div class="two">
-        <div><h3>Gate A · per transaction</h3><p>How big a batch can ever be (16,384 bytes, 14 M memory). Always binding. <strong>An empty block does not allow a bigger batch.</strong> Breaking it is a bug — it never happened in any run.</p></div>
-        <div><h3>Gate B · per block</h3><p>Whether the batch fits the block being produced. Depends on how full the chain is. Failing it only means <strong>waiting for the next block</strong>, never rejection.</p></div>
+    <canvas id="fibers" aria-hidden="true"></canvas>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <div class="hero-copy">
+        <span class="chip hero-in" style="--d:0"><span class="chip-dot"></span>AI-driven · Major Project · VBIT</span>
+        <h1 class="display scramble hero-in" style="--d:1"><span class="line">Adaptive Transaction</span> <span class="line grad-text">Batching for Cardano</span></h1>
+        <p class="lead hero-in" style="--d:2">A decentralized exchange keeps each liquidity pool in a single UTXO that only one transaction can spend per block. A <strong>batcher</strong> collects many users’ orders and settles them together. This project decides, block by block, whether to wait or to submit — and proves the decision on real chain data.</p>
+        <div class="cta hero-in" style="--d:3">
+          <button class="btn light" data-goto="run">Watch the batcher decide <span class="arrow" aria-hidden="true">→</span></button>
+          <button class="btn ghost" data-goto="compare">See the results</button>
+        </div>
       </div>
-    </article>
-
-    <article class="card step">
-      <div class="step-no">5</div>
-      <h2>What we measured first changed the project</h2>
-      <p>We collected <strong>388,781 real mainnet blocks over 92 days</strong>. The usual claim was that blocks run 80–90 % full. They don’t: the median block is <strong>2.95 %</strong> full and only 0.56 % exceed 80 %. So the real problem is the <strong>pool lock</strong>, not congestion — and the project was reframed around it.</p>
-    </article>
-
-    <article class="card step">
-      <div class="step-no">6</div>
-      <h2>The decision-makers we compared</h2>
-      <ul class="policies">
-        <li><b>E1 / E2 / E3</b> — today’s fixed rules: wait for 16 orders, submit every 20 s, or submit immediately (greedy).</li>
-        <li><b>P1</b> — a LightGBM model forecasting how full the next blocks will be.</li>
-        <li><b>P2</b> — an explainable optimizer: submit now unless a quieter block is coming and the batch is still small.</li>
-        <li><b>P3</b> — a Deep Q-Network agent that learned when to submit, with illegal actions masked.</li>
-      </ul>
-    </article>
-
-    <article class="card step result">
-      <div class="step-no">7</div>
-      <h2>The honest result</h2>
-      <p>On 100 held-out test days, <strong>no policy beat greedy on speed</strong> — when blocks are nearly empty, submitting immediately is already fastest. The adaptive policies instead give a <strong>controllable trade-off</strong>: P2 cuts cost per user by 19 % for 5 % more tail latency, and stays robust when traffic doubles while the fixed rules break down. <strong>Zero capacity violations</strong> across every run.</p>
-      <button class="link-btn" data-goto="compare">See the results →</button>
-    </article>
-
-    <article class="card step result">
-      <div class="step-no">8</div>
-      <h2>And it runs on a real blockchain</h2>
-      <p>Our own DEX is deployed on Cardano’s preprod test network. A real order was placed and the live batcher settled it: the user received <strong>90,661 TEAM11</strong>, and the contract enforced their minimum and fee share.</p>
-      <button class="link-btn" data-goto="live">See it live →</button> <button class="link-btn" data-goto="run">Watch the batcher decide →</button>
-    </article>
+    </div>
+    <div class="wrap">
+      <div class="hero-stats hero-in" style="--d:4">
+        <div class="hstat"><div class="hv num" data-count>388,781</div><div class="hl">real mainnet blocks collected</div></div>
+        <div class="hstat"><div class="hv num" data-count>92 days</div><div class="hl">of chain history</div></div>
+        <div class="hstat"><div class="hv num" data-count>2.95 %</div><div class="hl">median block fill — not 80–90 %</div></div>
+        <div class="hstat"><div class="hv num">0</div><div class="hl">capacity violations in every run</div></div>
+      </div>
+    </div>
   </div>
+
+  <!-- 01 -->
+  <section class="block">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <span class="eyebrow"><i>01</i> The mechanism</span>
+        <h2>One pool, one batch at a time</h2>
+        <p>Why batching exists on Cardano, what it costs, and the two limits every batch must respect.</p>
+      </header>
+
+      <div class="grid-2">
+        <article class="card step reveal">
+          <div class="step-no">1</div>
+          <h3>Users place orders; the batcher settles them together</h3>
+          <p>A user locks funds at the order contract with their terms: how much to sell and the minimum they will accept. They never talk to the batcher — it finds orders on chain.</p>
+          <svg viewBox="0 0 520 150" class="diagram" role="img" aria-label="Three users send orders to the order contract; the batcher combines them into one transaction against the pool">
+            <g class="d-node"><rect x="10" y="10" width="92" height="30" rx="8"/><text x="56" y="30">User A</text></g>
+            <g class="d-node"><rect x="10" y="60" width="92" height="30" rx="8"/><text x="56" y="80">User B</text></g>
+            <g class="d-node"><rect x="10" y="110" width="92" height="30" rx="8"/><text x="56" y="130">User C</text></g>
+            <path class="d-line flow" d="M102 25 C135 25 135 65 160 65 M102 75 L160 75 M102 125 C135 125 135 85 160 85 M280 75 L330 75 M414 75 L450 75"/>
+            <g class="d-contract"><rect x="160" y="45" width="120" height="60" rx="10"/><text x="220" y="70">Order</text><text x="220" y="88">contract</text></g>
+            <g class="d-accent"><rect x="330" y="45" width="84" height="60" rx="10"/><text x="372" y="70">Batcher</text><text x="372" y="88">(AI)</text></g>
+            <g class="d-contract"><rect x="450" y="45" width="62" height="60" rx="10"/><text x="481" y="80">Pool</text></g>
+          </svg>
+        </article>
+
+        <article class="card step reveal" style="--i:1">
+          <div class="step-no">2</div>
+          <h3>The pool lock: one batch at a time</h3>
+          <p>A submitted batch spends the pool and recreates it. Until it confirms, <strong>no second batch can be built</strong> — every new order waits behind it. That head-of-line blocking is the real cost of a badly timed submission.</p>
+          <svg viewBox="0 0 520 120" class="diagram" role="img" aria-label="A batch in flight locks the pool while the queue of waiting orders grows">
+            <g class="d-warn"><rect x="10" y="35" width="150" height="50" rx="10"/><text x="85" y="57">⏳ Pool LOCKED</text><text x="85" y="74" class="small">batch in flight</text></g>
+            <g class="d-queue">
+              <rect x="200" y="45" width="30" height="30" rx="6"/><rect x="238" y="45" width="30" height="30" rx="6"/><rect x="276" y="45" width="30" height="30" rx="6"/><rect x="314" y="45" width="30" height="30" rx="6"/><rect x="352" y="45" width="30" height="30" rx="6"/>
+            </g>
+            <text x="291" y="100" class="d-caption">orders queue up behind the lock</text>
+            <text x="455" y="65" class="d-caption">→ latency</text>
+          </svg>
+        </article>
+
+        <article class="card step reveal" style="--i:2">
+          <div class="step-no">3</div>
+          <h3>Cardano fees don’t rise with demand — so time is the cost</h3>
+          <p>Cardano’s fee is a fixed formula of size and script cost. There is no gas auction. Waiting never makes a transaction cheaper, so the goal is <strong>lower latency and lower cost per user</strong> — not “lower gas fees”.</p>
+          <div class="formula">fee = 44 × size + 155,381 + 0.0577 × memory + 0.0000721 × steps <span>lovelace</span></div>
+          <p class="muted">Batching still saves money: the flat part of the fee is shared by everyone in the batch. Our contract passes that saving to users — each pays <code>network fee ÷ n + margin</code>.</p>
+        </article>
+
+        <article class="card step reveal" style="--i:3">
+          <div class="step-no">4</div>
+          <h3>Two different limits — Gate A and Gate B</h3>
+          <div class="two">
+            <div class="gate"><span class="gate-tag">Gate A · per transaction</span><p>How big a batch can ever be (16,384 bytes, 14 M memory). Always binding. <strong>An empty block does not allow a bigger batch.</strong> Breaking it is a bug — it never happened in any run.</p></div>
+            <div class="gate"><span class="gate-tag alt">Gate B · per block</span><p>Whether the batch fits the block being produced. Depends on how full the chain is. Failing it only means <strong>waiting for the next block</strong>, never rejection.</p></div>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 -->
+  <section class="block">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <span class="eyebrow"><i>02</i> The evidence</span>
+        <h2>What we measured first changed the project</h2>
+        <p>Real chain data came before any model — and it overturned the usual assumption.</p>
+      </header>
+
+      <article class="card feature reveal">
+        <div class="step-no">5</div>
+        <div class="feature-grid">
+          <div>
+            <h3>Blocks are nearly empty — the pool lock is the real problem</h3>
+            <p>We collected <strong>388,781 real mainnet blocks over 92 days</strong>. The usual claim was that blocks run 80–90 % full. They don’t: the median block is <strong>2.95 %</strong> full and only 0.56 % exceed 80 %. So the real problem is the <strong>pool lock</strong>, not congestion — and the project was reframed around it.</p>
+          </div>
+          <div class="metric-stack">
+            <div class="metric reveal" style="--i:1"><div class="mv num" data-count>2.95 %</div><div class="ml">median block fill</div></div>
+            <div class="metric reveal" style="--i:2"><div class="mv num" data-count>0.56 %</div><div class="ml">of blocks exceed 80 % full</div></div>
+          </div>
+        </div>
+      </article>
+
+      <article class="card reveal">
+        <div class="step-no">6</div>
+        <h3>The decision-makers we compared</h3>
+        <div class="policy-grid">
+          <div class="policy reveal" style="--i:0"><span class="ptag static">E1 / E2 / E3</span><p>Today’s fixed rules: wait for 16 orders, submit every 20 s, or submit immediately (greedy).</p></div>
+          <div class="policy reveal" style="--i:1"><span class="ptag">P1</span><p>A LightGBM model forecasting how full the next blocks will be.</p></div>
+          <div class="policy reveal" style="--i:2"><span class="ptag">P2</span><p>An explainable optimizer: submit now unless a quieter block is coming and the batch is still small.</p></div>
+          <div class="policy reveal" style="--i:3"><span class="ptag">P3</span><p>A Deep Q-Network agent that learned when to submit, with illegal actions masked.</p></div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <!-- 03 -->
+  <section class="block">
+    <div class="wrap">
+      <header class="section-head reveal">
+        <span class="eyebrow"><i>03</i> The outcome</span>
+        <h2>An honest result, running on a real chain</h2>
+        <p>Measured on held-out days, then deployed and exercised on Cardano preprod.</p>
+      </header>
+
+      <div class="grid-2">
+        <article class="card step glow reveal">
+          <div class="step-no">7</div>
+          <h3>The honest result</h3>
+          <p>On 100 held-out test days, <strong>no policy beat greedy on speed</strong> — when blocks are nearly empty, submitting immediately is already fastest. The adaptive policies instead give a <strong>controllable trade-off</strong>: P2 cuts cost per user by 19 % for 5 % more tail latency, and stays robust when traffic doubles while the fixed rules break down. <strong>Zero capacity violations</strong> across every run.</p>
+          <div class="mini-stats">
+            <div><b class="num" data-count>19 %</b><span>lower cost per user, P2 vs greedy</span></div>
+            <div><b class="num" data-count>5 %</b><span>more tail latency</span></div>
+            <div><b class="num">0</b><span>capacity violations</span></div>
+          </div>
+          <button class="btn ghost" data-goto="compare">See the results <span class="arrow" aria-hidden="true">→</span></button>
+        </article>
+
+        <article class="card step glow reveal" style="--i:1">
+          <div class="step-no">8</div>
+          <h3>And it runs on a real blockchain</h3>
+          <p>Our own DEX is deployed on Cardano’s preprod test network. A real order was placed and the live batcher settled it: the user received <strong>90,661 TEAM11</strong>, and the contract enforced their minimum and fee share.</p>
+          <div class="mini-stats">
+            <div><b class="num" data-count>90,661</b><span>TEAM11 received by the user</span></div>
+            <div><b class="num" data-count>4</b><span>real transactions, end to end</span></div>
+          </div>
+          <div class="btn-row">
+            <button class="btn ghost" data-goto="live">See it live <span class="arrow" aria-hidden="true">→</span></button>
+            <button class="btn ghost" data-goto="run">Watch the batcher decide <span class="arrow" aria-hidden="true">→</span></button>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
 </section>
 
-<!-- ================================== RUN =================================== -->
+<!-- ============================== SIMULATOR ============================== -->
 <section id="tab-run" class="tab">
-  <div class="controls card">
-    <label>Policy <select id="run-policy"></select></label>
-    <label>Traffic <select id="run-rate"></select></label>
-    <label>Test day <select id="run-episode"></select></label>
-    <button id="run-load" class="primary">Load</button>
-    <span id="run-status" class="status" role="status"></span>
-  </div>
+  <div class="wrap page">
+    <header class="page-head">
+      <span class="eyebrow"><i>◇</i> Simulator · held-out test days</span>
+      <h1 class="scramble">Watch the batcher decide</h1>
+      <p>Replay a test day block by block through the simulator and see every wait-or-submit decision, the pool lock and the queue as they happen.</p>
+    </header>
 
-  <div id="run-body" hidden>
-    <div class="runhead card">
-      <div class="runtitle"><strong id="run-title"></strong><span id="run-sub" class="muted"></span></div>
-      <div class="clock">
-        <span>slot <b id="run-slot" class="num"></b></span>
-        <span>block <b id="run-height" class="num"></b></span>
-        <span>elapsed <b id="run-elapsed" class="num"></b></span>
-      </div>
-      <div class="transport">
-        <button id="run-back" title="Step back (←)" aria-label="Step back">◀</button>
-        <button id="run-play" title="Play / pause (space)" aria-label="Play">▶</button>
-        <button id="run-fwd" title="Step forward (→)" aria-label="Step forward">▶▶</button>
-        <select id="run-speed" aria-label="Speed">
-          <option value="1">1 block/s</option><option value="4" selected>4 blocks/s</option>
-          <option value="16">16 blocks/s</option><option value="64">64 blocks/s</option>
-        </select>
-      </div>
-      <input id="run-scrub" type="range" min="0" value="0" aria-label="Position in the day">
+    <div class="toolbar card">
+      <label class="field"><span>Policy</span><select id="run-policy"></select></label>
+      <label class="field"><span>Traffic</span><select id="run-rate"></select></label>
+      <label class="field grow"><span>Test day</span><select id="run-episode"></select></label>
+      <button id="run-load" class="btn light">Load</button>
+      <span id="run-status" class="status" role="status"></span>
     </div>
 
-    <div class="card chartcard">
-      <div class="cardhead"><h3>Block fill — last 120 blocks</h3><div class="legend"><span class="lg lg-actual"></span>actual <span class="lg lg-forecast"></span>forecast <span class="lg lg-submit">▲</span>batch submitted</div></div>
-      <svg id="run-chart" viewBox="0 0 960 220" preserveAspectRatio="none" role="img" aria-label="Block fill over the last 120 blocks"></svg>
-    </div>
-
-    <div class="panels">
-      <div class="card panel">
-        <h3>Order queue</h3>
-        <div class="big num" id="q-depth"></div><div class="muted">orders waiting</div>
-        <div class="kv"><span>oldest wait</span><b id="q-oldest" class="num"></b></div>
-        <div class="meter"><div id="q-meter"></div></div>
-        <div class="kv small"><span>deadline D_MAX</span><b id="q-dmax" class="num"></b></div>
+    <div id="run-body" hidden>
+      <div class="runhead card">
+        <div class="runtitle"><strong id="run-title"></strong><span id="run-sub" class="muted"></span></div>
+        <div class="clock">
+          <span>slot <b id="run-slot" class="num"></b></span>
+          <span>block <b id="run-height" class="num"></b></span>
+          <span>elapsed <b id="run-elapsed" class="num"></b></span>
+        </div>
+        <div class="transport">
+          <button id="run-back" class="icon-btn" title="Step back (←)" aria-label="Step back">◀</button>
+          <button id="run-play" class="icon-btn play" title="Play / pause (space)" aria-label="Play">▶</button>
+          <button id="run-fwd" class="icon-btn" title="Step forward (→)" aria-label="Step forward">▶▶</button>
+          <select id="run-speed" aria-label="Speed">
+            <option value="1">1 block/s</option><option value="4" selected>4 blocks/s</option>
+            <option value="16">16 blocks/s</option><option value="64">64 blocks/s</option>
+          </select>
+        </div>
+        <input id="run-scrub" type="range" min="0" value="0" aria-label="Position in the day">
       </div>
-      <div class="card panel">
-        <h3>Pool</h3>
-        <div class="state" id="p-state"></div>
-        <div class="muted" id="p-detail"></div>
-      </div>
-      <div class="card panel">
-        <h3>Decision</h3>
-        <div class="state" id="d-action"></div>
-        <div class="muted" id="d-reason"></div>
-        <div class="kv"><span>Gate A max n <small>(per transaction)</small></span><b id="d-gatea" class="num"></b></div>
-        <div class="kv"><span>Gate B max n <small>(fits next block)</small></span><b id="d-gateb" class="num"></b></div>
-        <div class="kv"><span>forecast fill</span><b id="d-forecast" class="num"></b></div>
-      </div>
-    </div>
 
-    <div class="tiles" id="run-tiles"></div>
+      <div class="card chartcard">
+        <div class="cardhead"><h3>Block fill — last 120 blocks</h3><div class="legend"><span class="lg lg-actual"></span>actual <span class="lg lg-forecast"></span>forecast <span class="lg lg-submit">▲</span>batch submitted</div></div>
+        <svg id="run-chart" viewBox="0 0 960 220" preserveAspectRatio="none" role="img" aria-label="Block fill over the last 120 blocks"></svg>
+      </div>
 
-    <div class="card">
-      <div class="cardhead"><h3>Decision log</h3><span class="muted small">newest first · one row per block</span></div>
-      <div class="tablewrap"><table class="log"><thead><tr><th>slot</th><th>queue</th><th>oldest</th><th>fill</th><th>forecast</th><th>pool</th><th>action</th><th>n</th><th>note</th></tr></thead><tbody id="run-log"></tbody></table></div>
+      <div class="panels">
+        <div class="card panel">
+          <h3>Order queue</h3>
+          <div class="big num" id="q-depth"></div><div class="muted">orders waiting</div>
+          <div class="kv"><span>oldest wait</span><b id="q-oldest" class="num"></b></div>
+          <div class="meter"><div id="q-meter"></div></div>
+          <div class="kv small"><span>deadline D_MAX</span><b id="q-dmax" class="num"></b></div>
+        </div>
+        <div class="card panel">
+          <h3>Pool</h3>
+          <div class="state" id="p-state"></div>
+          <div class="muted" id="p-detail"></div>
+        </div>
+        <div class="card panel">
+          <h3>Decision</h3>
+          <div class="state" id="d-action"></div>
+          <div class="muted" id="d-reason"></div>
+          <div class="kv"><span>Gate A max n <small>(per transaction)</small></span><b id="d-gatea" class="num"></b></div>
+          <div class="kv"><span>Gate B max n <small>(fits next block)</small></span><b id="d-gateb" class="num"></b></div>
+          <div class="kv"><span>forecast fill</span><b id="d-forecast" class="num"></b></div>
+        </div>
+      </div>
+
+      <div class="tiles" id="run-tiles"></div>
+
+      <div class="card">
+        <div class="cardhead"><h3>Decision log</h3><span class="muted small">newest first · one row per block</span></div>
+        <div class="tablewrap"><table class="log"><thead><tr><th>slot</th><th>queue</th><th>oldest</th><th>fill</th><th>forecast</th><th>pool</th><th>action</th><th>n</th><th>note</th></tr></thead><tbody id="run-log"></tbody></table></div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ================================ COMPARE ================================= -->
+<!-- ============================== RESULTS ============================== -->
 <section id="tab-compare" class="tab">
-  <div class="card controls">
-    <span>Traffic level</span>
-    <div class="seg" id="cmp-rate"></div>
-    <span id="cmp-status" class="status" role="status"></span>
-  </div>
-  <div id="cmp-body" hidden>
-    <div class="card findings" id="cmp-findings"></div>
-    <div class="card">
-      <div class="cardhead"><h3>All policies — median over paired test days, 95 % confidence interval</h3></div>
-      <div class="tablewrap"><table class="results" id="cmp-table"></table></div>
-      <p class="muted small">Latency in slots (1 slot = 1 second). Cost is the network fee each user shares, in ADA. Bold = best among real policies (NULL and ORACLE are reference points, not contenders).</p>
+  <div class="wrap page">
+    <header class="page-head">
+      <span class="eyebrow"><i>◇</i> Results · 100 paired test days</span>
+      <h1 class="scramble">How the policies compare</h1>
+      <p>Medians over paired held-out days with 95 % confidence intervals. Switch the traffic level to see which policies hold up when load doubles.</p>
+    </header>
+
+    <div class="toolbar card">
+      <span class="field-label">Traffic level</span>
+      <div class="seg" id="cmp-rate"></div>
+      <span id="cmp-status" class="status" role="status"></span>
     </div>
-    <div class="grid2">
-      <div class="card"><div class="cardhead"><h3>Trade-off — tail latency against cost per user</h3></div><svg id="cmp-pareto" viewBox="0 0 520 380" role="img" aria-label="Scatter of tail latency against cost per user"></svg><p class="muted small">Down and to the left is better on both. Bars are 95 % CIs.</p></div>
-      <div class="card"><div class="cardhead"><h3>How long orders waited — normal traffic</h3></div><svg id="cmp-cdf" viewBox="0 0 520 380" role="img" aria-label="Cumulative distribution of order latency"></svg><p class="muted small">Share of orders confirmed within a given time. The dashed line marks 95 %.</p></div>
+    <div id="cmp-body" hidden>
+      <div class="findings" id="cmp-findings"></div>
+      <div class="card">
+        <div class="cardhead"><h3>All policies — median over paired test days, 95 % confidence interval</h3></div>
+        <div class="tablewrap"><table class="results" id="cmp-table"></table></div>
+        <p class="muted small">Latency in slots (1 slot = 1 second). Cost is the network fee each user shares, in ADA. Bold = best among real policies (NULL and ORACLE are reference points, not contenders).</p>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="cardhead"><h3>Trade-off — tail latency against cost per user</h3></div><svg id="cmp-pareto" viewBox="0 0 520 380" role="img" aria-label="Scatter of tail latency against cost per user"></svg><p class="muted small">Down and to the left is better on both. Bars are 95 % CIs.</p></div>
+        <div class="card"><div class="cardhead"><h3>How long orders waited — normal traffic</h3></div><svg id="cmp-cdf" viewBox="0 0 520 380" role="img" aria-label="Cumulative distribution of order latency"></svg><p class="muted small">Share of orders confirmed within a given time. The dashed line marks 95 %.</p></div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ================================== LIVE ================================== -->
+<!-- ============================== LIVE ============================== -->
 <section id="tab-live" class="tab">
-  <div class="card controls">
-    <span class="pill" id="live-pill">checking…</span>
-    <span class="muted" id="live-tip"></span>
-    <button id="live-refresh">Refresh</button>
-  </div>
-  <div id="live-body">
-    <div class="grid2">
-      <div class="card"><div class="cardhead"><h3>The pool on chain</h3></div><div id="live-pool"></div></div>
-      <div class="card"><div class="cardhead"><h3>Orders waiting to be batched</h3></div><div id="live-orders"></div></div>
+  <div class="wrap page">
+    <header class="page-head">
+      <span class="eyebrow"><i>◇</i> Live · Cardano preprod</span>
+      <h1 class="scramble">Running on a real blockchain</h1>
+      <p>Our DEX is deployed on Cardano’s preprod test network. The pool and the order queue below are read from the chain right now.</p>
+    </header>
+
+    <div class="toolbar card">
+      <span class="pill" id="live-pill">Checking…</span>
+      <span class="muted" id="live-tip"></span>
+      <button id="live-refresh" class="btn ghost small-btn">Refresh</button>
     </div>
-    <div class="card"><div class="cardhead"><h3>The first end-to-end swap — every step is a real transaction</h3></div><ol class="timeline" id="live-txs"></ol></div>
-    <div class="card"><div class="cardhead"><h3>Contracts and addresses</h3></div><div id="live-addresses"></div></div>
-    <div class="card howto">
-      <h3>Run another swap during the presentation</h3>
-      <ol>
-        <li><code>python scripts/place_order.py --amount-ada 10 --min-out 80000 --submit</code></li>
-        <li><code>python scripts/run_batcher.py --policy p2 --live --max-blocks 1</code></li>
-        <li>Press <b>Refresh</b> here, then open the new batch on the explorer.</li>
-      </ol>
-      <p class="muted small">Test ADA only · preprod network · the scripts refuse any other network.</p>
+    <div id="live-body">
+      <div class="grid-2">
+        <div class="card"><div class="cardhead"><h3>The pool on chain</h3></div><div id="live-pool"></div></div>
+        <div class="card"><div class="cardhead"><h3>Orders waiting to be batched</h3></div><div id="live-orders"></div></div>
+      </div>
+      <div class="card"><div class="cardhead"><h3>The first end-to-end swap — every step is a real transaction</h3></div><ol class="timeline" id="live-txs"></ol></div>
+      <div class="card"><div class="cardhead"><h3>Contracts and addresses</h3></div><div id="live-addresses"></div></div>
+      <div class="card howto">
+        <h3>Run another swap during the presentation</h3>
+        <ol>
+          <li><code>python scripts/place_order.py --amount-ada 10 --min-out 80000 --submit</code></li>
+          <li><code>python scripts/run_batcher.py --policy p2 --live --max-blocks 1</code></li>
+          <li>Press <b>Refresh</b> here, then open the new batch on the explorer.</li>
+        </ol>
+        <p class="muted small">Test ADA only · preprod network · the scripts refuse any other network.</p>
+      </div>
     </div>
   </div>
 </section>
 
 </main>
-<footer class="foot muted small">Team 11 · Adaptive Batching for Cardano DEXes · every number on these pages comes from the project’s committed experiments or live preprod data</footer>
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <span>Team 11 · Adaptive Batching for Cardano DEXes · VBIT</span>
+    <span class="muted">Every number on these pages comes from the project’s committed experiments or live preprod data</span>
+  </div>
+</footer>
+<script src="/static/fx.js"></script>
 <script src="/static/app.js"></script>
 </body>
 </html>

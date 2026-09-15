@@ -59,7 +59,13 @@ function showTab(name) {
   if (name === "live") Live.refresh();
   if (name === "run") Run.ensure();
   history.replaceState(null, "", `#${name}`);
-  window.scrollTo({ top: 0 });
+  window.scrollTo({ top: 0, behavior: "instant" });
+  document.body.classList.toggle("on-overview", name === "how");
+  if (typeof FX !== "undefined") {
+    FX.moveIndicator();
+    FX.scramble(document.querySelector(`#tab-${name} .scramble`));
+    requestAnimationFrame(() => FX.observe(document.querySelector(`#tab-${name}`)));
+  }
 }
 document.querySelectorAll(".tabs button").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.tab)));
 document.querySelectorAll("[data-goto]").forEach((b) => b.addEventListener("click", () => showTab(b.dataset.goto)));
@@ -217,6 +223,7 @@ const Run = {
     if (!this.data) return;
     this.i = Math.max(0, Math.min(this.data.rows.length - 1, k));
     $("#run-scrub").value = String(this.i);
+    $("#run-scrub").style.setProperty("--pos", `${(this.i / Math.max(1, this.data.rows.length - 1)) * 100}%`);
     this.render();
   },
 
@@ -306,8 +313,17 @@ const Run = {
       if (r.submit) svgEl("text", { x: x(k), y: H - 4, "text-anchor": "middle", fill: cssVar("--good"), "font-size": 12 }, svg, "▲");
       if (r.resolution === "expired") svgEl("text", { x: x(k), y: H - 4, "text-anchor": "middle", fill: cssVar("--critical"), "font-size": 12 }, svg, "✕");
     }
-    svgEl("polyline", { points: forecast.join(" "), fill: "none", stroke: cssVar("--accent-soft"), "stroke-width": 2, "stroke-dasharray": "5 4" }, svg);
-    svgEl("polyline", { points: actual.join(" "), fill: "none", stroke: cssVar("--accent"), "stroke-width": 2 }, svg);
+    const defs = svgEl("defs", {}, svg);
+    const grad = svgEl("linearGradient", { id: "fill-grad", x1: 0, x2: 0, y1: 0, y2: 1 }, defs);
+    svgEl("stop", { offset: "0", "stop-color": cssVar("--accent"), "stop-opacity": 0.45 }, grad);
+    svgEl("stop", { offset: "1", "stop-color": cssVar("--accent"), "stop-opacity": 0 }, grad);
+    if (actual.length > 1) {
+      const baseline = y(0).toFixed(1);
+      const area = `${actual[0].split(",")[0]},${baseline} ${actual.join(" ")} ${actual[actual.length - 1].split(",")[0]},${baseline}`;
+      svgEl("polygon", { points: area, fill: "url(#fill-grad)", stroke: "none" }, svg);
+    }
+    svgEl("polyline", { points: forecast.join(" "), fill: "none", stroke: cssVar("--accent-soft"), "stroke-width": 1.6, "stroke-dasharray": "5 4", opacity: 0.8 }, svg);
+    svgEl("polyline", { points: actual.join(" "), fill: "none", stroke: cssVar("--accent-soft"), "stroke-width": 2, class: "line-actual" }, svg);
     svgEl("line", { x1: x(this.i), x2: x(this.i), y1: top, y2: H - bottom, stroke: cssVar("--muted"), "stroke-width": 1 }, svg);
   },
 
@@ -407,6 +423,7 @@ const Compare = {
       div.append(htmlEl("div", { class: "v num" }, v), htmlEl("div", { class: "l" }, l));
       return div;
     }));
+    if (typeof FX !== "undefined") $("#cmp-findings").querySelectorAll(".v").forEach((n) => FX.countUp(n, 900));
   },
 
   table() {
@@ -472,18 +489,21 @@ const Compare = {
     svgEl("text", { x: 14, y: (T + H - B) / 2, "text-anchor": "middle", transform: `rotate(-90 14 ${(T + H - B) / 2})` }, svg, "tail latency p95 (s)  ← faster");
 
     const placed = [];
-    pts.sort((a, b) => a.l_p95[0] - b.l_p95[0]).forEach((p) => {
+    pts.sort((a, b) => a.l_p95[0] - b.l_p95[0]).forEach((p, idx) => {
       const color = cssVar(FAMILY_COLOR[p.family] || "--muted");
       const cx = sx(p.c_user[0] / 1e6), cy = sy(p.l_p95[0]);
-      svgEl("line", { x1: sx(p.c_user[1] / 1e6), x2: sx(p.c_user[2] / 1e6), y1: cy, y2: cy, stroke: color, "stroke-width": 1.2 }, svg);
-      svgEl("line", { x1: cx, x2: cx, y1: sy(p.l_p95[1]), y2: sy(p.l_p95[2]), stroke: color, "stroke-width": 1.2 }, svg);
+      const delay = `${0.15 + idx * 0.08}s`;
+      const group = svgEl("g", { class: "fade-in", style: `animation-delay:${delay}` }, svg);
+      svgEl("line", { x1: sx(p.c_user[1] / 1e6), x2: sx(p.c_user[2] / 1e6), y1: cy, y2: cy, stroke: color, "stroke-width": 1.2, opacity: 0.8 }, group);
+      svgEl("line", { x1: cx, x2: cx, y1: sy(p.l_p95[1]), y2: sy(p.l_p95[2]), stroke: color, "stroke-width": 1.2, opacity: 0.8 }, group);
       const hollow = p.family === "reference";
-      svgEl("circle", { cx, cy, r: 6, fill: hollow ? cssVar("--chart") : color, stroke: color, "stroke-width": 2 }, svg);
+      if (!hollow) svgEl("circle", { cx, cy, r: 12, fill: color, opacity: 0.18, class: "pop", style: `animation-delay:${delay}` }, svg);
+      svgEl("circle", { cx, cy, r: 6, fill: hollow ? cssVar("--page") : color, stroke: color, "stroke-width": 2, class: "pop", style: `animation-delay:${delay}` }, svg);
       let ly = cy - 9;
       while (placed.some((q) => Math.abs(q.x - cx) < 120 && Math.abs(q.y - ly) < 13)) ly += 14;
       placed.push({ x: cx, y: ly });
       const anchor = cx > W - 150 ? "end" : "start";
-      svgEl("text", { x: cx + (anchor === "end" ? -9 : 9), y: ly, "text-anchor": anchor, class: "ptlabel" }, svg,
+      svgEl("text", { x: cx + (anchor === "end" ? -11 : 11), y: ly, "text-anchor": anchor, class: "ptlabel fade-in", style: `animation-delay:${delay}` }, svg,
         p.key === "e3(greedy)" ? "E3 greedy (≡ P2 N=1)" : p.label.split(" · ")[0] + (p.key === "p2(D=120,N=4)" ? " N=4" : ""));
     });
   },
@@ -509,7 +529,8 @@ const Compare = {
     keys.forEach(([key, color, label, dash], idx) => {
       if (!q[key]) return;
       const points = q[key].slice(0, 100).map((v, p) => `${sx(v).toFixed(1)},${sy(p / 100).toFixed(1)}`).join(" ");
-      svgEl("polyline", { points, fill: "none", stroke: cssVar(color), "stroke-width": 2.2, "stroke-dasharray": dash }, svg);
+      const curve = svgEl("polyline", { points, fill: "none", stroke: cssVar(color), "stroke-width": 2.2, "stroke-dasharray": dash }, svg);
+      if (typeof FX !== "undefined") FX.drawIn(curve, 1100, idx * 120);
       const ly = sy(0.55) + idx * 16;
       svgEl("line", { x1: W - R - 150, x2: W - R - 126, y1: ly - 4, y2: ly - 4, stroke: cssVar(color), "stroke-width": 2.2, "stroke-dasharray": dash }, svg);
       svgEl("text", { x: W - R - 120, y: ly, class: "ptlabel" }, svg, `${label} · p95 ${Math.round(q[key][95])} s`);
@@ -525,7 +546,7 @@ const Live = {
     if (this.busy) return;
     this.busy = true;
     const pill = $("#live-pill");
-    pill.textContent = "checking…"; pill.className = "pill";
+    pill.textContent = "Checking…"; pill.className = "pill";
     try {
       const d = await getJSON("/api/live");
       this.render(d);
@@ -540,10 +561,10 @@ const Live = {
   render(d) {
     const pill = $("#live-pill"), tip = $("#live-tip");
     if (d.available) {
-      pill.textContent = "● connected to preprod"; pill.className = "pill ok";
+      pill.textContent = "Connected to preprod"; pill.className = "pill ok";
       tip.textContent = `chain tip at slot ${nf.format(d.tip_slot)} · refreshes every 30 s`;
     } else {
-      pill.textContent = "offline — showing recorded transactions"; pill.className = "pill off";
+      pill.textContent = "Offline — showing recorded transactions"; pill.className = "pill off";
       tip.textContent = d.reason || "";
     }
 
@@ -562,6 +583,10 @@ const Live = {
       const a = htmlEl("a", { href: d.pool.url, target: "_blank", rel: "noopener" }, short(d.pool.utxo, 12, 6));
       p.appendChild(a);
       pool.replaceChildren(grid, p);
+      // count up only when the pool actually changed, not on every 30 s refresh
+      const signature = stats.map(([v]) => v).join("|");
+      if (typeof FX !== "undefined" && signature !== this.lastPool) grid.querySelectorAll(".v").forEach((n) => FX.countUp(n, 1000));
+      this.lastPool = signature;
     } else {
       pool.replaceChildren(htmlEl("div", { class: "empty" }, d.available ? "Pool not found at the pool address." : "Live pool data needs a connection to Blockfrost."));
     }
@@ -617,6 +642,7 @@ const Live = {
 $("#live-refresh").addEventListener("click", () => Live.refresh());
 
 /* ---------- start ---------- */
+if (typeof FX !== "undefined") FX.fibers($("#fibers"));
 const initial = (location.hash || "#how").slice(1);
 showTab(["how", "run", "compare", "live"].includes(initial) ? initial : "how");
 Run.ensure(); // start preparing replay data now, so Run is ready by the time it is opened
