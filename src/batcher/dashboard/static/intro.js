@@ -1,20 +1,14 @@
 "use strict";
 /* Opening sequence: the project told in six short canvas scenes before the pages —
    one order → thousands arrive → the pool lock → 92 days of mainnet → an AI decides →
-   Adaptive Batcher, whose mark flares into the live site. Shown once per browser session
-   (add ?intro to the URL to replay), skippable with the button, Enter, Space or Escape,
-   and skipped entirely for reduced-motion users. Every figure is the project's own. */
+   Adaptive Batcher, whose mark flares into the live site. Plays on every page load
+   (?intro=15 starts at a given second) and can be skipped with the button, Enter, Space
+   or Escape. Every figure is the project's own. */
 (() => {
   const root = document.getElementById("intro");
   if (!root) return;
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-  const params = new URLSearchParams(location.search);
-  const force = params.has("intro");
   // ?intro=15 starts at 15 s — handy for rehearsing a single scene
-  const startAt = Math.max(0, Number(params.get("intro")) || 0);
-  let seen = false;
-  try { seen = sessionStorage.getItem("intro-seen") === "1"; } catch (_) { /* storage blocked */ }
-  if (reduced || (seen && !force)) { root.remove(); return; }
+  const startAt = Math.max(0, Number(new URLSearchParams(location.search).get("intro")) || 0);
   document.body.classList.add("intro-playing");
 
   const LEAVE = 17.4, END = 18.3;
@@ -433,7 +427,6 @@
     leftAt = performance.now();
     root.classList.add("leaving");
     document.body.classList.remove("intro-playing");
-    try { sessionStorage.setItem("intro-seen", "1"); } catch (_) { /* storage blocked */ }
     dispatchEvent(new Event("intro:done"));
   }
   function finish() {

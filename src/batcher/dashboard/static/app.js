@@ -650,7 +650,7 @@ addEventListener("intro:done", () => {
   FX.moveIndicator();
   FX.scramble(active && active.querySelector(".scramble"));
 });
-$("#replay-intro").addEventListener("click", () => { location.href = `${location.pathname}?intro`; });
+$("#replay-intro").addEventListener("click", () => { location.href = location.pathname; });
 const initial = (location.hash || "#how").slice(1);
 showTab(["how", "run", "compare", "live"].includes(initial) ? initial : "how");
 Run.ensure(); // start preparing replay data now, so Run is ready by the time it is opened
