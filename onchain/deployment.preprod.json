@@ -1,0 +1,12 @@
+{
+  "network": "preprod",
+  "batcher_key_hash": "851b8750a28f24dd273b55c6b9db1ab9d6dbb2e279a945c23a76d4f1",
+  "mint_before_slot": 133774747,
+  "mint_policy_id": "66b3557a7e7dfa0cae15ea6498b0e05db976669a2717c574a356e58a",
+  "token_name": "5445414d3131",
+  "nft_name": "504f4f4c",
+  "fee_bps": 30,
+  "order_script_hash": "1676fbd256ca880594c30dc1e024439748dca693788786ac54f98567",
+  "pool_script_hash": "2c9aee89dbbc6c7e30f720c2e0e76d7850b1eaf1bb5b53a517a96475",
+  "deploy_tx": "555ee19bd06d2151931035039dac883b560d9f93bb35b3fd1efa24a30f767372"
+}

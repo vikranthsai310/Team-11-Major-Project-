@@ -33,6 +33,7 @@ from pycardano import (
     min_lovelace_post_alonzo,
 )
 from pycardano.exception import DeserializeException
+from pycardano.serialization import RawCBOR
 
 from batcher.build.estimator import tx_mem, tx_size, tx_steps
 from batcher.build.submitter import A_TO_B, B_TO_A, BatchPlan, OrderUtxo, plan_batch
@@ -216,6 +217,21 @@ def build_cancel_tx(
     return builder.build_and_sign([user_skey], change_address=owner)
 
 
+def datum_bytes(datum) -> bytes:
+    """The CBOR of an inline datum, however the chain context delivered it.
+
+    Blockfrost hands inline datums back as ``RawCBOR`` — bytes with no
+    ``to_cbor`` — while locally built outputs carry ``PlutusData``. Reading only
+    the latter made every real order look undecodable, found on the first read of
+    the deployed pool on preprod.
+    """
+    if isinstance(datum, RawCBOR):
+        return datum.cbor
+    if hasattr(datum, "to_cbor"):
+        return datum.to_cbor()
+    return cbor2.dumps(datum)
+
+
 def read_orders(
     utxos: Sequence[UTxO], deployment: Deployment, network
 ) -> list[tuple[UTxO, OrderUtxo]]:
@@ -231,8 +247,7 @@ def read_orders(
         if datum is None:
             continue
         try:
-            raw = datum.to_cbor() if hasattr(datum, "to_cbor") else cbor2.dumps(datum)
-            order = OrderDatum.from_cbor(raw)
+            order = OrderDatum.from_cbor(datum_bytes(datum))
         except (DeserializeException, ValueError, TypeError, KeyError):
             continue
 

@@ -194,7 +194,7 @@ add(
   P("A dataset of **388,781 mainnet blocks over 92 days** was collected from the Koios API. It overturned the project’s original premise: median block fill is 2.95 %, only 0.564 % of blocks exceed 80 %, and the longest congested run is ten blocks. The work was therefore reframed around concurrency rather than congestion. A deterministic, slot-accurate simulator replays the recorded blocks against a synthetic order stream fitted to the chain’s diurnal activity. Against it we evaluate three tuned static baselines, a LightGBM congestion forecaster, a constrained optimizer (P2) and a Deep Q-Network agent (P3) with structural action masking, using paired episodes, Wilcoxon signed-rank tests, bootstrap confidence intervals and Holm–Bonferroni correction."),
   P("The forecaster beats a moving-average baseline by 11.2 % in MAE but lags the series it predicts. Every policy, including the learned agent, produced **zero** capacity violations. An ablation shows the DQN agent is queue-aware rather than congestion-aware."),
   P("On the held-out test split — 100 paired episodes at three arrival rates, evaluated once — **no adaptive policy beats greedy batching on tail latency**: where capacity rarely binds, greedy is latency-optimal. The result is therefore a trade-off frontier rather than dominance. At the matched rate the optimizer with a minimum batch of four cuts per-user cost by 19 % for 5 % more tail latency and Pareto-dominates the tuned fixed-interval baseline by median; the DQN agent cuts cost by 43 % with the best fairness of any proposed policy, but one of its five seeds breaks down under heavy load."),
-  P("The project also delivers a minimal on-chain DEX for the Cardano preprod test network: Aiken validators that enforce each user’s slippage floor and a **pass-through batcher fee**, so the amortization the policies optimise reaches users rather than the operator, together with a live batcher that runs the simulator’s decision loop against the chain. Both are built and tested offline. [[PENDING: preprod deployment and the end-to-end swap]]"),
+  P("The project also delivers a minimal on-chain DEX for the Cardano preprod test network: Aiken validators that enforce each user’s slippage floor and a **pass-through batcher fee**, so the amortization the policies optimise reaches users rather than the operator, together with a live batcher that runs the simulator’s decision loop against the chain. The DEX is deployed on preprod. [[PENDING: the end-to-end swap]]"),
   P("**Keywords:** Cardano, eUTXO, decentralized exchange, transaction batching, reinforcement learning, DQN, LightGBM, discrete-event simulation, Aiken, Plutus."),
 );
 
@@ -941,8 +941,18 @@ add(
   P("Read together, the verdicts describe a **trade-off result, not a dominance result**. The one safety criterion, S2, holds without exception. The latency criterion S3 fails for a reason the data predicted: Phase 1 found capacity binding about once in 180 blocks, and in a system where capacity does not bind the latency-optimal batcher is greedy, which no policy can beat by waiting. What the adaptive policies deliver instead is controllable movement along the latency–cost frontier — robustly for the optimizer, with a better fairness profile but seed-level brittleness for the learned agent. S3 failing while S2 holds is, in the evaluation protocol’s own terms, a publishable outcome stated rather than hidden."),
   H2("8.12 On-Chain Demonstration"),
   ...Callout("Status", [
-    "The on-chain DEX, the transaction builders and the live batcher are **built and verified offline** (Sections 5.11, 6.11–6.13, 7.5). They have **not yet been deployed to preprod**: deployment needs a Blockfrost preprod project and faucet-funded keys provided by the team, and each submission is made only with explicit approval. [[PENDING: deployment transaction hash, end-to-end swap transaction hash (T-O6), and the D4 estimator calibration]]",
+    "**The DEX is deployed on the Cardano preprod test network.** The deployment transaction was included on 15 September 2026, and the pool was verified on chain against the deployment record. Each submission is made only with the team’s explicit approval. [[PENDING: end-to-end swap transaction hash (T-O6) and the D4 estimator calibration]]",
   ]),
+  ...Tbl("Preprod deployment", ["Item", "Value"], [
+    ["Deployment transaction", "`555ee19bd06d2151931035039dac883b560d9f93bb35b3fd1efa24a30f767372`"],
+    ["Block / slot", "5,178,709 / 133,767,575"],
+    ["Network fee", "181,913 lovelace (0.18 tADA), 603 bytes"],
+    ["Minted", "10,000,000 TEAM11 and one POOL NFT; minting closed after slot 133,774,747"],
+    ["Pool, verified on chain", "100 tADA + 1,000,000 TEAM11 + 1 POOL NFT, inline datum equal to the recorded deployment (fee 30 bps)"],
+    ["Pool script hash", "`2c9aee89dbbc6c7e30f720c2e0e76d7850b1eaf1bb5b53a517a96475`"],
+    ["Order script hash", "`1676fbd256ca880594c30dc1e024439748dca693788786ac54f98567`"],
+  ], [2600, 6400]),
+  P("**The first live read found a defect the offline tests could not.** Blockfrost returns inline datums as raw CBOR bytes, whereas locally built outputs carry typed Plutus data. The order reader handled only the latter, so every real order would have been treated as undecodable and silently skipped: the live batcher would have watched an apparently empty queue indefinitely. It was caught while verifying the deployed pool’s datum, before any order was placed, fixed, and pinned with a regression test that feeds the builders datums in the form Blockfrost delivers them."),
   P("The demonstration is scripted as five steps, each a dry run until explicitly submitted: deploy the pool and mint its NFT; run the batcher in shadow mode to confirm its decisions on live chain state; place an order from a separate user key; run the batcher live until that order settles; and compare estimated with actual transaction size and execution units from the D4 log."),
   ...Tbl("Phase 7 exit criteria", ["Criterion", "Status"], [
     ["T-O1 … T-O5, including the security tests T-O2 and T-O3", "Pass — Aiken unit tests"],
@@ -994,7 +1004,7 @@ add(
   B("**No transaction chaining** — conservative, but real batchers can exploit it."),
   B("**Estimator not yet calibrated against live transactions** — per-order costs are estimates, and the fee formula omits the reference-script surcharge."),
   B("**Under-trained and brittle agent** — P3 was trained at a tenth of the specified budget, and one of five seeds fails under heavy load."),
-  B("**The live demonstration has not yet run on preprod** — the validators, transaction builders and live batcher are built and tested offline; deployment, the end-to-end swap and the estimator calibration remain."),
+  B("**The live demonstration is incomplete** — the DEX is deployed on preprod, but the end-to-end swap and the estimator calibration against D4 remain."),
   B("**No latency gain over greedy** — on the current chain no adaptive policy beat greedy on tail latency; the benefit is cost and fairness at a stated latency price."),
   B("**Replay of the recent past** — Ouroboros Leios and changing activity will alter block dynamics."),
   H2("9.4 Future Work"),

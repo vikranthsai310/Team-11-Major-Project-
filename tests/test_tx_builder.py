@@ -271,6 +271,29 @@ def test_junk_at_the_order_script_is_ignored(world):
     assert len(found) == 1
 
 
+def test_datums_as_blockfrost_returns_them_are_read_and_batched(world):
+    """Regression: Blockfrost delivers inline datums as RawCBOR, not PlutusData.
+
+    Found on preprod: reading only PlutusData made every real order undecodable,
+    so the live batcher would have seen an empty queue forever.
+    """
+    from pycardano.serialization import RawCBOR
+
+    chain, batcher, user, deployment, scripts = world
+    order_address, pool_address = dex.addresses(deployment)
+    raw_pool = pool_utxo(chain, deployment)
+    raw_pool.output.datum = RawCBOR(raw_pool.output.datum.to_cbor())
+    for i in range(2):
+        order = order_utxo(chain, deployment, user, i)
+        order.output.datum = RawCBOR(order.output.datum.to_cbor())
+
+    orders = tx_builder.read_orders(chain.utxos(order_address), deployment, Network.TESTNET)
+    assert len(orders) == 2
+
+    built = tx_builder.build_batch_tx(chain, batcher, deployment, scripts, raw_pool, orders)
+    assert built.plan.n == 2
+
+
 def test_the_pool_is_found_by_its_nft(world):
     chain, _, _, deployment, _ = world
     pool = pool_utxo(chain, deployment)
