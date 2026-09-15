@@ -444,7 +444,12 @@
     leave();
     setTimeout(finish, 900);
   }
+  // Keys skip only once the intro has been showing for a moment, and never from a held key:
+  // reloading by pressing Enter in the address bar sends repeated Enter presses to the new page,
+  // which would otherwise skip the intro the instant it appears.
+  const keysFrom = performance.now() + 1200;
   function onKey(e) {
+    if (e.repeat || performance.now() < keysFrom) return;
     const enter = e.key === "Enter" || e.code === "Enter" || e.code === "NumpadEnter" || e.keyCode === 13;
     if (enter || e.key === "Escape" || e.key === " ") { e.preventDefault(); skip(); }
   }
