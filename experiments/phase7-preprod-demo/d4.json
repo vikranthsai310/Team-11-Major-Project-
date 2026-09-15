@@ -1,0 +1,16 @@
+[
+  {
+    "tx_hash": "b5201c0a0843f5e258a7c9d9dba4b9b7cb66f88f1c0810baa2e6ad7337c73af1",
+    "submit_slot": 133785075,
+    "confirm_slot": 133785125,
+    "n": 1,
+    "est_size": 800,
+    "actual_size": 2682,
+    "est_mem": 2500000,
+    "actual_mem": 473756,
+    "est_steps": 1000000000,
+    "actual_steps": 166037580,
+    "fee_lovelace": 322697,
+    "outcome": "included"
+  }
+]

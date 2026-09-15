@@ -1,0 +1,84 @@
+{
+  "batch_tx": "b5201c0a0843f5e258a7c9d9dba4b9b7cb66f88f1c0810baa2e6ad7337c73af1",
+  "config_hash": "6fd53264c5415b9a823ddbd60a1571cf64fc18055811e3316d93d7c9eba37104",
+  "created_utc": "2026-09-15T10:34:23+00:00",
+  "d4": [
+    {
+      "actual_mem": 473756,
+      "actual_size": 2682,
+      "actual_steps": 166037580,
+      "confirm_slot": 133785125,
+      "est_mem": 2500000,
+      "est_size": 800,
+      "est_steps": 1000000000,
+      "fee_lovelace": 322697,
+      "n": 1,
+      "outcome": "included",
+      "submit_slot": 133785075,
+      "tx_hash": "b5201c0a0843f5e258a7c9d9dba4b9b7cb66f88f1c0810baa2e6ad7337c73af1"
+    }
+  ],
+  "dataset_checksum": null,
+  "deploy_tx": "555ee19bd06d2151931035039dac883b560d9f93bb35b3fd1efa24a30f767372",
+  "experiment_id": "phase7-preprod-demo",
+  "funding_tx": "103ea27080012f0ae30a2383440c37ab3a518d01a49267df9186db9f8bf6d9c4",
+  "git": {
+    "dirty": true,
+    "sha": "df58756954da969f2c28ed55b28596094285937c"
+  },
+  "network": "preprod",
+  "order": {
+    "amount_in": 10000000,
+    "direction": "AtoB",
+    "locked": 15000000,
+    "margin": 1000000,
+    "min_out": 85000
+  },
+  "order_tx": "6ffd8101fa74be32c6729f255b7f29e5f6b11edab050d3fc0f07c220a525ac41",
+  "params": {
+    "ACTION_BUCKETS": [
+      1,
+      4,
+      8,
+      12,
+      16,
+      20,
+      25,
+      30
+    ],
+    "DEFAULT_SEED": 42,
+    "D_MAX": 120,
+    "FORECAST_HORIZON": 3,
+    "FORECAST_WINDOW_K": 20,
+    "N_MIN": 8,
+    "ORDER_TTL_SLOTS": 3600,
+    "QUEUE_CAP": 200,
+    "TTL_SLOTS": 600
+  },
+  "policy": "p2(D=120,N=4)",
+  "protocol": {
+    "ACTIVE_SLOT_COEFF": 0.05,
+    "MAX_BLOCK_EX_MEM": 62000000,
+    "MAX_BLOCK_EX_STEPS": 40000000000,
+    "MAX_BLOCK_SIZE": 90112,
+    "MAX_TX_EX_MEM": 14000000,
+    "MAX_TX_EX_STEPS": 10000000000,
+    "MAX_TX_SIZE": 16384,
+    "MIN_FEE_A": 44,
+    "MIN_FEE_B": 155381,
+    "PRICE_MEM": 0.0577,
+    "PRICE_STEPS": 7.21e-05,
+    "SLOT_SECONDS": 1
+  },
+  "seed": 42,
+  "verified_on_chain": {
+    "confirm_slot": 133785125,
+    "orders_left": 0,
+    "pool_after_lovelace": 110000000,
+    "pool_after_team11": 909339,
+    "pool_nft": 1,
+    "submit_slot": 133785075,
+    "user_payout_lovelace": 3679758,
+    "user_payout_team11": 90661
+  }
+}
