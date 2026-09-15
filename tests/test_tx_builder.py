@@ -17,15 +17,17 @@ from pycardano import (
     Network,
     PaymentSigningKey,
     ProtocolParameters,
+    Transaction,
     TransactionInput,
     TransactionOutput,
     UTxO,
     Value,
 )
+from pycardano.exception import TransactionFailedException
 
 from batcher.build import tx_builder
 from batcher.build.estimator import max_n_satisfying_gate_a
-from batcher.build.submitter import A_TO_B, GateAViolation
+from batcher.build.submitter import A_TO_B, GateAViolation, plan_batch
 from batcher.config.protocol import (
     MAX_BLOCK_EX_MEM,
     MAX_BLOCK_EX_STEPS,
@@ -292,6 +294,95 @@ def test_datums_as_blockfrost_returns_them_are_read_and_batched(world):
 
     built = tx_builder.build_batch_tx(chain, batcher, deployment, scripts, raw_pool, orders)
     assert built.plan.n == 2
+
+
+class StrictChain(FakeChain):
+    """Evaluates like a node: applies order.ak's fee rule to the transaction it is
+    asked to evaluate, using the fee *that* transaction carries."""
+
+    def __init__(self):
+        super().__init__()
+        self.order_address = None
+        self.evaluations = 0
+
+    def evaluate_tx_cbor(self, cbor):
+        self.evaluations += 1
+        tx = Transaction.from_cbor(bytes.fromhex(cbor) if isinstance(cbor, str) else cbor)
+        body = tx.transaction_body
+        known = {u.input: u for utxos in self.by_address.values() for u in utxos}
+        orders = [
+            known[i]
+            for i in body.inputs
+            if i in known and str(known[i].output.address) == str(self.order_address)
+        ]
+        for utxo in orders:
+            order = datums.OrderDatum.from_cbor(tx_builder.datum_bytes(utxo.output.datum))
+            for output in body.outputs:
+                if output.datum is None:
+                    continue
+                try:
+                    tag = datums.OutputRef.from_cbor(tx_builder.datum_bytes(output.datum))
+                except Exception:
+                    continue
+                if (tag.transaction_id, tag.output_index) != (
+                    utxo.input.transaction_id.payload,
+                    utxo.input.index,
+                ):
+                    continue
+                allowed = (
+                    utxo.output.amount.coin
+                    - order.amount_in
+                    - (body.fee // len(orders) + order.margin)
+                )
+                if output.amount.coin < allowed:
+                    raise TransactionFailedException("order.ak: user charged above fee/n + margin")
+        return super().evaluate_tx_cbor(cbor)
+
+
+@pytest.fixture
+def strict():
+    chain = StrictChain()
+    batcher = PaymentSigningKey.generate()
+    user = PaymentSigningKey.generate()
+    deployment, scripts = dex.derive(
+        batcher.to_verification_key().hash(), TIP + 3_600, apply=unapplied
+    )
+    chain.order_address, _ = dex.addresses(deployment)
+    chain.add(tx_builder.key_address(batcher, chain), Value(2_000_000_000), tx_byte=0xB0)
+    pool = pool_utxo(chain, deployment)
+    for i in range(2):
+        order_utxo(chain, deployment, user, i)
+    orders = tx_builder.read_orders(chain.utxos(chain.order_address), deployment, Network.TESTNET)
+    return chain, batcher, deployment, scripts, pool, orders
+
+
+def test_charging_the_estimated_fee_fails_evaluation_as_it_did_on_preprod(strict):
+    """Pins the cause of the first live failure: the estimator's fee exceeds the
+    real one, so a batch charging users for it is rejected during evaluation."""
+    chain, batcher, deployment, scripts, pool, orders = strict
+    x, y = POOL_ADA, POOL_TOKENS
+    overcharging = plan_batch(
+        [o for _, o in orders], x, y, deployment.fee_bps, network_fee=2_000_000
+    )
+    by_ref = {(o.tx_hash, o.index): u for u, o in orders}
+    with pytest.raises(TransactionFailedException):
+        tx_builder._assemble(
+            chain, batcher, deployment, scripts, pool, by_ref, overcharging, TIP + 600
+        )
+
+
+def test_the_two_pass_build_survives_a_node_enforcing_the_fee_rule(strict):
+    chain, batcher, deployment, scripts, pool, orders = strict
+    built = tx_builder.build_batch_tx(chain, batcher, deployment, scripts, pool, orders)
+
+    body = built.transaction.transaction_body
+    assert chain.evaluations == 1, "only the margin-only probe should be evaluated"
+    assert built.plan.network_fee <= body.fee
+    for _, order in orders:
+        payout = next(p for p in built.plan.payouts if p.order == order)
+        assert payout.lovelace >= order.lovelace - order.amount_in - (
+            body.fee // built.plan.n + order.margin
+        )
 
 
 def test_the_pool_is_found_by_its_nft(world):

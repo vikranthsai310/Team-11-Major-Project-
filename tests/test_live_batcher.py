@@ -314,3 +314,21 @@ def test_shutdown_waits_for_the_batch_in_flight_and_starts_no_new_one(world):
     assert len(fake.submitted) == 1, "no batch may start once a stop was requested"
     assert len(ticks) >= 3
     assert batcher.records[-1]["resolution"] == "stopping"
+
+
+def test_a_failed_build_is_logged_and_the_daemon_keeps_running(world, monkeypatch):
+    """Regression: on preprod a failed script evaluation crashed the daemon."""
+    fake = world[0]
+    add_orders(world, 1)
+
+    def failing(*_args, **_kwargs):
+        raise RuntimeError("EvaluationFailure")
+
+    monkeypatch.setattr(daemon, "build_batch_tx", failing)
+    batcher = make(world, submit=True)
+
+    (record,) = batcher.step()
+    assert record["resolution"] == "build_failed" and "EvaluationFailure" in record["error"]
+    assert not batcher.pool_locked and fake.submitted == []
+    fake.next_block()
+    assert len(batcher.step()) == 1, "the next block is still decided"

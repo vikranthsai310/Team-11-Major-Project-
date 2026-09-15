@@ -205,6 +205,14 @@ class LiveBatcher:
             raise  # a defect: stop the daemon rather than trade around it
         except NothingToBatch:
             return self._record(tip, obs=obs, action=action, resolution="unfillable")
+        except Exception as error:  # a failed build or evaluation submitted nothing
+            return self._record(
+                tip,
+                obs=obs,
+                action=action,
+                resolution="build_failed",
+                error=f"{type(error).__name__}: {error}",
+            )
 
         if not self.submit:
             return self._record(tip, obs=obs, action=action, built=built, resolution="shadow")

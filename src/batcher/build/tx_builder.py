@@ -22,6 +22,7 @@ from dataclasses import dataclass
 import cbor2
 from pycardano import (
     Address,
+    ExecutionUnits,
     MultiAsset,
     PaymentSigningKey,
     Redeemer,
@@ -309,18 +310,42 @@ def build_batch_tx(
     orders: Sequence[tuple[UTxO, OrderUtxo]],
     ttl_slots: int = TTL_SLOTS,
 ) -> BuiltBatch:
-    """Plan, build and sign one batch. Gate A is re-checked inside ``plan_batch``."""
+    """Plan, build and sign one batch. Gate A is re-checked inside ``plan_batch``.
+
+    Built in two passes, because of a chicken-and-egg problem found on preprod.
+    The node evaluates the scripts *while the transaction is being built*, and
+    ``order.ak`` checks each payout against the fee that evaluated transaction
+    carries — which is not known until evaluation has priced the scripts. Charging
+    users for an estimated fee failed on the first live batch: the real fee came in
+    lower, users were overcharged, and the validator rightly refused.
+
+    1. **Probe.** Charge users their margin only, which satisfies ``order.ak`` at
+       any fee, and let the node evaluate. That yields the execution units.
+    2. **Final.** Fix those execution units on every redeemer, so no further
+       evaluation happens and the fee is deterministic, then charge users for the
+       fee the transaction actually carries, rebuilding until the two agree.
+    """
     x = _coin(pool_utxo.output.amount)
     y = _quantity(pool_utxo.output.amount, deployment, deployment.token_name)
     queued = [order for _, order in orders]
     by_ref = {(order.tx_hash, order.index): utxo for utxo, order in orders}
     ttl = context.last_block_slot + ttl_slots
 
-    plan = plan_batch(queued, x, y, deployment.fee_bps)
+    probe_plan = plan_batch(queued, x, y, deployment.fee_bps, network_fee=0)
+    if probe_plan.n == 0:
+        raise NothingToBatch("no queued order can be filled at its min_out")
+    probe = _assemble(
+        context, batcher_skey, deployment, scripts, pool_utxo, by_ref, probe_plan, ttl
+    )
+    units = _probe_units(probe)
+
+    plan = plan_batch(queued, x, y, deployment.fee_bps, network_fee=probe.transaction_body.fee)
     for _ in range(MAX_FEE_ROUNDS):
         if plan.n == 0:
             raise NothingToBatch("no queued order can be filled at its min_out")
-        tx = _assemble(context, batcher_skey, deployment, scripts, pool_utxo, by_ref, plan, ttl)
+        tx = _assemble(
+            context, batcher_skey, deployment, scripts, pool_utxo, by_ref, plan, ttl, units
+        )
         fee = tx.transaction_body.fee
         if plan.network_fee <= fee <= plan.network_fee + FEE_TOLERANCE_LOVELACE:
             return _measure(tx, plan, ttl)
@@ -334,17 +359,25 @@ def build_batch_tx(
     )
 
 
-def _assemble(context, skey, deployment, scripts, pool_utxo, by_ref, plan, ttl) -> Transaction:
+def _assemble(
+    context, skey, deployment, scripts, pool_utxo, by_ref, plan, ttl, units=None
+) -> Transaction:
+    """Build and sign. With ``units`` the node is not asked to evaluate again."""
     batcher_hash = skey.to_verification_key().hash()
     batcher = Address(batcher_hash, network=context.network)
     _, pool_address = addresses(deployment, context.network)
 
+    def redeemer(data):
+        if units is None:
+            return Redeemer(data)
+        return Redeemer(data, ExecutionUnits(units.mem, units.steps))
+
     builder = TransactionBuilder(context, fee_buffer=FEE_BUFFER_LOVELACE)
     for payout in plan.payouts:
         utxo = by_ref[(payout.order.tx_hash, payout.order.index)]
-        builder.add_script_input(utxo, script=scripts["order"].script, redeemer=Redeemer(Execute()))
+        builder.add_script_input(utxo, script=scripts["order"].script, redeemer=redeemer(Execute()))
     builder.add_script_input(
-        pool_utxo, script=scripts["pool"].script, redeemer=Redeemer(PoolBatch())
+        pool_utxo, script=scripts["pool"].script, redeemer=redeemer(PoolBatch())
     )
     builder.add_input_address(batcher)  # the network fee and the collateral
 
@@ -372,6 +405,20 @@ def _assemble(context, skey, deployment, scripts, pool_utxo, by_ref, plan, ttl) 
     builder.required_signers = [batcher_hash]
     builder.ttl = ttl
     return builder.build_and_sign([skey], change_address=batcher)
+
+
+def _probe_units(tx: Transaction) -> ExecutionUnits:
+    """The largest evaluated budget, applied to every redeemer in the final build.
+
+    Taking the maximum rather than mapping each redeemer back to its input keeps
+    the final transaction valid even if a script costs slightly more once payout
+    amounts change; the extra units are priced into the real fee users share.
+    """
+    redeemers = tx.transaction_witness_set.redeemer
+    values = list(redeemers.values() if hasattr(redeemers, "values") else redeemers)
+    return ExecutionUnits(
+        max(r.ex_units.mem for r in values), max(r.ex_units.steps for r in values)
+    )
 
 
 def _redeemer_units(tx: Transaction) -> tuple[int, int]:
