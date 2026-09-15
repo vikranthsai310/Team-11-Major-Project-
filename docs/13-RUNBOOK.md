@@ -179,6 +179,19 @@ changed scripts would no longer spend the deployed pool.
 Minting closes `--mint-window-slots` after the deploy transaction (default 7,200,
 two hours). After that no second `POOL` NFT can be minted, by anyone, ever.
 
+### 7.1a The presentation dashboard
+
+```bash
+python scripts/dashboard.py            # opens http://127.0.0.1:8050 in the browser
+```
+
+Four tabs: **How it works**, **Run** (replay a test day block by block — press
+space to play, arrows to step), **Results** and **Live on preprod**. The first
+Run load takes about a minute while the 92-day dataset is read; after that each
+replay is a few seconds and then cached. Run and Results work offline; Live
+needs `BLOCKFROST_PROJECT_ID`. The server binds localhost only and refuses
+anything else.
+
 ### 7.2 Running the batcher
 
 ```bash
