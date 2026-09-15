@@ -3,7 +3,7 @@
 :root {
   --page: #190a06;
   --page-2: #1c0b08;
-  --surface: rgba(45, 22, 11, 0.62);
+  --surface: rgba(45, 22, 11, 0.74);
   --surface-2: rgba(58, 30, 16, 0.7);
   --chart: rgba(25, 11, 6, 0.6);
   --ink: #fcf0eb;
@@ -150,8 +150,7 @@ main { min-height: 100vh; }
 
 /* ---------------- hero ---------------- */
 .hero { position: relative; min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; justify-content: center; overflow: hidden; padding-block: 110px 36px; isolation: isolate; }
-#fibers { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; opacity: 0; transition: opacity .7s var(--ease); }
-body.on-overview #fibers { opacity: 1; }
+#fibers { position: fixed; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none; }
 main, .foot { position: relative; z-index: 1; }
 .hero-shade {
   position: absolute; inset: 0; z-index: -1; pointer-events: none;
@@ -182,6 +181,12 @@ main, .foot { position: relative; z-index: 1; }
 .hstat:first-child { border-left: 0; }
 .hv { font-size: clamp(22px, 2.4vw, 30px); font-weight: 500; letter-spacing: -0.03em; }
 .hl { color: var(--muted); font-size: 12.5px; }
+
+/* headings and text that sit straight on the light strands get a soft dark halo */
+.hero-copy .display, .hero-copy .lead, .section-head h2, .section-head p, .page-head h1, .page-head p {
+  text-shadow: 0 2px 20px rgba(25, 10, 6, 0.75), 0 0 2px rgba(25, 10, 6, 0.5);
+}
+.hero-copy .grad-text { text-shadow: none; }
 
 /* ---------------- sections & cards ---------------- */
 .block { padding-block: clamp(56px, 8vw, 96px) 0; }
@@ -447,7 +452,7 @@ body.intro-playing .hero-in, body.intro-playing .page-head > *, body.intro-playi
   .nav-cta { display: none; }
   .tabs { margin-right: 0; }
   .hero-inner { justify-content: flex-start; }
-  body.on-overview #fibers { opacity: .55; }
+  #fibers { opacity: .55; }
   .hero-shade { background: linear-gradient(180deg, rgba(25, 10, 6, 0.5), rgba(25, 10, 6, 0.35) 50%, rgba(25, 10, 6, 0.2)); }
   .hero-stats { grid-template-columns: repeat(2, 1fr); }
   .hstat:nth-child(3) { border-left: 0; }

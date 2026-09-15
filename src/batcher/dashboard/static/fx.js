@@ -129,8 +129,14 @@ const FX = (() => {
     // where each shape is brightest (x, y as fractions of the screen) and how hot that point glows
     const HOT = [[0.04, 0.5, 1], [0.5, 0.5, 0.8], [0.43, 0.5, 0.55], [0.17, 0.65, 0.3], [0.5, 0.97, 0.9]];
     const DIM = [1, 0.8, 0.75, 0.85, 0.8];
-    let w = 0, h = 0, strands = [], pulses = [], orbs = [], stops = [0, 1, 2, 3, 4];
-    let raf = null, last = performance.now(), stage = 0, mx = 0, my = 0, mxT = 0, myT = 0;
+    // overall light level of the strands, sparks, orbs and glow (1 = full); 0.98 is 2 % dimmer
+    const BRIGHTNESS = 0.98;
+    // on the data pages the strands move between two signature shapes as the page scrolls,
+    // and sit dimmer behind the tables and charts
+    const ROUTES = { run: [1, 2], compare: [3, 4], live: [2, 1] };
+    const PAGE_DIM = 0.7;
+    let w = 0, h = 0, strands = [], pulses = [], orbs = [], stops = [0, 1, 2, 3, 4], page = "how", end = 1;
+    let raf = null, last = performance.now(), stage = 0, pageDim = 1, mx = 0, my = 0, mxT = 0, myT = 0;
     const t0 = performance.now();
 
     function build() {
@@ -150,15 +156,24 @@ const FX = (() => {
       }));
     }
 
-    // scroll positions at which each shape is fully formed: the hero, then each overview section
+    // which page is showing, and on the overview the scroll positions at which each shape is
+    // fully formed: the hero, then each section
     function measure() {
+      const active = document.querySelector(".tab[data-active]");
+      page = active ? active.id.replace("tab-", "") : "how";
+      end = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+      if (page !== "how") return;
       const blocks = [...document.querySelectorAll("#tab-how .block")].slice(0, 3);
-      const end = Math.max(1, document.documentElement.scrollHeight - innerHeight);
       const s = [0, ...blocks.map((b) => b.getBoundingClientRect().top + scrollY - innerHeight * 0.45), end];
       for (let k = 1; k < s.length; k += 1) s[k] = Math.max(s[k], s[k - 1] + 1);
       stops = s;
     }
     function targetStage() {
+      const route = ROUTES[page];
+      if (route) {
+        const e = Math.min(1, Math.max(0, scrollY / end));
+        return route[0] + (route[1] - route[0]) * e * e * (3 - 2 * e);
+      }
       for (let k = 0; k < stops.length - 1; k += 1) {
         if (scrollY < stops[k + 1]) {
           const f = (scrollY - stops[k]) / (stops[k + 1] - stops[k]);
@@ -218,7 +233,9 @@ const FX = (() => {
       stage = still ? target : stage + (target - stage) * 0.08;
       const a = Math.min(SHAPES - 1, Math.floor(stage)), b = Math.min(SHAPES - 1, a + 1), m = stage - a;
       const mix = (i) => HOT[a][i] + (HOT[b][i] - HOT[a][i]) * m;
-      const hx = w * mix(0), hy = h * mix(1), heat = mix(2), dim = DIM[a] + (DIM[b] - DIM[a]) * m;
+      pageDim += ((page === "how" ? 1 : PAGE_DIM) - pageDim) * (still ? 1 : 0.06);
+      const light = BRIGHTNESS * pageDim;
+      const hx = w * mix(0), hy = h * mix(1), heat = mix(2) * light, dim = (DIM[a] + (DIM[b] - DIM[a]) * m) * light;
 
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = "lighter";
@@ -274,7 +291,7 @@ const FX = (() => {
         let y = (o.y * span - scrollY * o.depth * 0.3 + Math.cos(t * o.sp * 0.8 + o.ph) * 14) % span;
         if (y < 0) y += span;
         y -= 120;
-        const r = o.r * (w < 700 ? 0.7 : 1), al = o.a * orbVis;
+        const r = o.r * (w < 700 ? 0.7 : 1), al = o.a * orbVis * light;
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);
         g.addColorStop(0, `rgba(255,236,222,${al * 1.3})`);
         g.addColorStop(0.5, `rgba(227,203,189,${al * 0.55})`);
@@ -298,9 +315,8 @@ const FX = (() => {
     }
 
     function loop(now) {
-      const body = document.body.classList;
-      // draw only on the overview, and not underneath the intro
-      if (body.contains("on-overview") && !body.contains("intro-playing")) frame(now);
+      // every page has the strands; only the intro covers them
+      if (!document.body.classList.contains("intro-playing")) frame(now);
       else last = now;
       raf = requestAnimationFrame(loop);
     }
@@ -322,6 +338,8 @@ const FX = (() => {
     addEventListener("resize", resize);
     // cards revealing, data loading and tab switches all move the sections
     new ResizeObserver(measure).observe(document.body);
+    // switching pages moves the active tab; re-read which page's shapes to show
+    new MutationObserver(measure).observe(document.querySelector("main"), { attributes: true, subtree: true, attributeFilter: ["data-active"] });
     addEventListener("scroll", () => { if (reduced) frame(performance.now(), true); }, { passive: true });
     addEventListener("pointermove", (e) => {
       mxT = (e.clientX / innerWidth - 0.5) * 2;
