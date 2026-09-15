@@ -151,17 +151,17 @@ const FX = (() => {
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       const fx = w * 0.04;
       gradA = ctx.createLinearGradient(fx, 0, w, 0);
-      gradA.addColorStop(0, "rgba(250,247,255,1)");
-      gradA.addColorStop(0.07, "#c4b5fd");
-      gradA.addColorStop(0.3, "#9f67ff");
-      gradA.addColorStop(0.65, "#6d28d9");
-      gradA.addColorStop(1, "rgba(76,29,149,0.04)");
+      gradA.addColorStop(0, "rgba(255,247,240,1)");
+      gradA.addColorStop(0.07, "#e3cbbd");
+      gradA.addColorStop(0.3, "#c79a80");
+      gradA.addColorStop(0.65, "#8a5a43");
+      gradA.addColorStop(1, "rgba(110,58,30,0.04)");
       gradB = ctx.createLinearGradient(fx, 0, w, 0);
-      gradB.addColorStop(0, "rgba(236,246,255,1)");
-      gradB.addColorStop(0.08, "#a5b4fc");
-      gradB.addColorStop(0.35, "#6366f1");
-      gradB.addColorStop(0.75, "#3730a3");
-      gradB.addColorStop(1, "rgba(14,165,233,0.04)");
+      gradB.addColorStop(0, "rgba(255,243,234,1)");
+      gradB.addColorStop(0.08, "#d8b9a6");
+      gradB.addColorStop(0.35, "#8a5b43");
+      gradB.addColorStop(0.75, "#5e3a28");
+      gradB.addColorStop(1, "rgba(138,91,67,0.04)");
       if (!strands.length) build();
       frame(performance.now(), true);
     }
@@ -198,16 +198,16 @@ const FX = (() => {
         const [x, y] = bezier(s.pts, 1 - p.p);
         const a = Math.sin(p.p * Math.PI);
         ctx.globalAlpha = 0.16 * a;
-        ctx.fillStyle = s.blue ? "#93c5fd" : "#c4b5fd";
+        ctx.fillStyle = s.blue ? "#e6cbbb" : "#e3cbbd";
         ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI * 2); ctx.fill();
         ctx.globalAlpha = 0.95 * a;
         ctx.fillStyle = "#ffffff";
         ctx.beginPath(); ctx.arc(x, y, 1.3, 0, Math.PI * 2); ctx.fill();
       }
       const glow = ctx.createRadialGradient(fx, fy, 0, fx, fy, Math.max(80, h * 0.22));
-      glow.addColorStop(0, "rgba(237,233,254,0.55)");
-      glow.addColorStop(0.35, "rgba(139,92,246,0.18)");
-      glow.addColorStop(1, "rgba(139,92,246,0)");
+      glow.addColorStop(0, "rgba(245,230,222,0.55)");
+      glow.addColorStop(0.35, "rgba(185,138,112,0.18)");
+      glow.addColorStop(1, "rgba(185,138,112,0)");
       ctx.globalAlpha = 1;
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, w, h);

@@ -62,7 +62,7 @@
   const MARK = ["M3 16 C11 16 14 5 29 3", "M3 16 C11 16 15 10 29 10", "M3 16 H29", "M3 16 C11 16 15 22 29 22", "M3 16 C11 16 14 27 29 29"].map((d) => new Path2D(d));
   const DECISIONS = [[11.95, "WAIT"], [12.45, "WAIT"], [12.95, "WAIT"], [13.4, "SUBMIT"]];
 
-  function spark(x, y, size, alpha, tint = "196,181,253") {
+  function spark(x, y, size, alpha, tint = "227,203,189") {
     if (alpha <= 0.01) return;
     const r = size * 9;
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
@@ -72,7 +72,7 @@
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
   }
-  function trail(pts, alpha, width, tint = "196,181,253") {
+  function trail(pts, alpha, width, tint = "227,203,189") {
     for (let k = 1; k < pts.length; k += 1) {
       const f = k / pts.length;
       ctx.strokeStyle = `rgba(${tint},${alpha * f})`;
@@ -109,7 +109,7 @@
     if (grow <= 0 || fadeOut <= 0) return;
     const x2 = x + (W - x + 40) * easeOut(grow);
     const g = ctx.createLinearGradient(x, 0, x2, 0);
-    g.addColorStop(0, "rgba(196,181,253,0)");
+    g.addColorStop(0, "rgba(227,203,189,0)");
     g.addColorStop(1, `rgba(255,255,255,${0.95 * a * fadeOut})`);
     ctx.strokeStyle = g; ctx.lineWidth = 3 * G.u;
     ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y); ctx.stroke();
@@ -125,9 +125,9 @@
       ctx.rotate(-0.38 + tilt);
       const w = 46 * G.u;
       const g = ctx.createLinearGradient(-w, 0, w, 0);
-      g.addColorStop(0, "rgba(196,181,253,0)");
-      g.addColorStop(0.5, `rgba(237,233,254,${0.5 * env * strength})`);
-      g.addColorStop(1, "rgba(196,181,253,0)");
+      g.addColorStop(0, "rgba(227,203,189,0)");
+      g.addColorStop(0.5, `rgba(245,230,222,${0.5 * env * strength})`);
+      g.addColorStop(1, "rgba(227,203,189,0)");
       ctx.fillStyle = g; ctx.fillRect(-w, -H * 1.5, w * 2, H * 3);
       ctx.restore();
     });
@@ -136,16 +136,18 @@
   /* ---------- stage ---------- */
   function background(t) {
     ctx.globalCompositeOperation = "source-over";
-    ctx.fillStyle = "#05040a"; ctx.fillRect(0, 0, W, H);
+    const bg = ctx.createLinearGradient(0, 0, 0, H);
+    bg.addColorStop(0, "#35190b"); bg.addColorStop(0.55, "#28120a"); bg.addColorStop(1, "#190a06");
+    ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
     const v = ctx.createRadialGradient(G.cx, G.cy, 0, G.cx, G.cy, Math.max(W, H) * 0.75);
-    v.addColorStop(0, "rgba(76,29,149,0.30)");
-    v.addColorStop(0.45, "rgba(49,46,129,0.10)");
-    v.addColorStop(1, "rgba(5,4,10,0)");
+    v.addColorStop(0, "rgba(110,58,30,0.30)");
+    v.addColorStop(0.45, "rgba(70,38,22,0.10)");
+    v.addColorStop(1, "rgba(25,10,6,0)");
     ctx.fillStyle = v; ctx.fillRect(0, 0, W, H);
     ctx.globalCompositeOperation = "lighter";
     for (const d of DUST) {
       const tw = 0.3 + 0.7 * Math.abs(Math.sin(t * 0.8 + d.ph));
-      ctx.fillStyle = `rgba(196,181,253,${0.3 * tw})`;
+      ctx.fillStyle = `rgba(227,203,189,${0.3 * tw})`;
       ctx.beginPath(); ctx.arc(((d.x + t * d.s) % 1) * W, d.y * H, d.r * G.u, 0, TAU); ctx.fill();
     }
   }
@@ -161,13 +163,13 @@
       ctx.restore();
     }
     const f = ctx.createLinearGradient(0, G.hz, 0, H);
-    f.addColorStop(0, "rgba(5,4,10,0.2)");
-    f.addColorStop(1, "rgba(5,4,10,0.96)");
+    f.addColorStop(0, "rgba(25,10,6,0.2)");
+    f.addColorStop(1, "rgba(25,10,6,0.96)");
     ctx.fillStyle = f; ctx.fillRect(0, G.hz, W, H - G.hz);
     const line = ctx.createLinearGradient(0, 0, W, 0);
-    line.addColorStop(0, "rgba(167,139,250,0)");
-    line.addColorStop(0.5, "rgba(196,181,253,0.3)");
-    line.addColorStop(1, "rgba(167,139,250,0)");
+    line.addColorStop(0, "rgba(207,165,140,0)");
+    line.addColorStop(0.5, "rgba(227,203,189,0.3)");
+    line.addColorStop(1, "rgba(207,165,140,0)");
     ctx.fillStyle = line; ctx.fillRect(0, G.hz, W, 1);
   }
 
@@ -182,7 +184,7 @@
     trail(pts, 0.9 * a, 2.2 * G.u);
     const [x, y] = bez(P, p);
     spark(x, y, 2.6 * G.u, a);
-    if (p > 0.12) label("ORDER", x + 30 * G.u, y - 14 * G.u, `rgba(221,214,254,${0.75 * a * prog(p, 0.12, 0.3)})`, 8);
+    if (p > 0.12) label("ORDER", x + 30 * G.u, y - 14 * G.u, `rgba(236,220,211,${0.75 * a * prog(p, 0.12, 0.3)})`, 8);
   }
 
   /* ---------- scenes 2–3: thousands arrive, then collapse into the pool ---------- */
@@ -207,7 +209,7 @@
       for (let k = 8; k >= 0; k -= 1) { const [x, y] = orderPos(o, t - k * 0.028); pts.push([x, y]); }
       const [x, y, collapse] = orderPos(o, t);
       const a = prog(t, o.ts, o.ts + 0.2) * (1 - collapse);
-      const tint = o.blue ? "165,180,252" : "196,181,253";
+      const tint = o.blue ? "216,185,166" : "227,203,189";
       trail(pts, 0.55 * a, 1.4 * G.u, tint);
       spark(x, y, 1.5 * G.u, a, tint);
     }
@@ -217,7 +219,7 @@
     if (a <= 0) return;
     const R = 30 * G.u * (0.4 + 0.6 * easeOut(prog(t, 5.5, 6.3)));
     const locked = t > 7.05 && t < 8.75;
-    const tint = locked ? "251,191,36" : "167,139,250";
+    const tint = locked ? "251,191,36" : "207,165,140";
     ring(G.cx, G.cy, R, `rgba(${tint},${0.9 * a})`, 2 * G.u);
     ring(G.cx, G.cy, R * 1.55, `rgba(${tint},${0.35 * a})`, 1.2 * G.u, [4 * G.u, 9 * G.u], -t * 30 * G.u);
     if (locked) {
@@ -225,7 +227,7 @@
       ring(G.cx, G.cy, R * (1 + pulse * 1.4), `rgba(251,191,36,${0.5 * (1 - pulse) * a})`, 1.5 * G.u);
     }
     spark(G.cx, G.cy, (2.2 + 2.4 * prog(t, 6.2, 7.0)) * G.u * (locked ? 0.8 : 1), a, tint);
-    label(locked ? "LOCKED" : "POOL", G.cx, G.cy + R * 1.55 + 24 * G.u, locked ? `rgba(251,191,36,${a})` : `rgba(185,179,207,${0.85 * a})`, 9);
+    label(locked ? "LOCKED" : "POOL", G.cx, G.cy + R * 1.55 + 24 * G.u, locked ? `rgba(251,191,36,${a})` : `rgba(217,195,186,${0.85 * a})`, 9);
     beam(G.cx + R, G.cy, prog(t, 7.0, 7.4), 1 - prog(t, 7.5, 8.3), a);
     // new orders queue behind the lock, and flow in once it opens
     const release = easeInOut(prog(t, 8.75, 9.2));
@@ -250,16 +252,16 @@
       const e = easeOut(clamp((W + gap * 0.2 - x) / (gap * 1.2)));
       const alpha = a * e, y = G.cy - s / 2 + (1 - e) * 12 * G.u;
       if (k > 0) {
-        ctx.strokeStyle = `rgba(167,139,250,${0.35 * alpha})`;
+        ctx.strokeStyle = `rgba(207,165,140,${0.35 * alpha})`;
         ctx.beginPath(); ctx.moveTo(x - gap + s, G.cy); ctx.lineTo(x, G.cy); ctx.stroke();
       }
-      ctx.fillStyle = `rgba(139,92,246,${0.07 * alpha})`;
-      ctx.strokeStyle = `rgba(196,181,253,${0.75 * alpha})`;
+      ctx.fillStyle = `rgba(185,138,112,${0.07 * alpha})`;
+      ctx.strokeStyle = `rgba(227,203,189,${0.75 * alpha})`;
       ctx.beginPath();
       if (ctx.roundRect) ctx.roundRect(x, y, s, s, 8 * G.u); else ctx.rect(x, y, s, s);
       ctx.fill(); ctx.stroke();
       const fill = BLOCKS[k].fill, inner = s - 10 * G.u, fh = Math.max(2 * G.u, inner * fill);
-      ctx.fillStyle = fill > 0.5 ? `rgba(251,191,36,${0.7 * alpha})` : `rgba(167,139,250,${0.85 * alpha})`;
+      ctx.fillStyle = fill > 0.5 ? `rgba(251,191,36,${0.7 * alpha})` : `rgba(207,165,140,${0.85 * alpha})`;
       ctx.fillRect(x + 5 * G.u, y + s - 5 * G.u - fh, inner, fh);
     }
     spark(((local * 0.45) % 1) * W, G.cy, 1.8 * G.u, a * 0.9);
@@ -279,27 +281,27 @@
       if (pj > 0 && pj < 0.5) { const k = pj * 2; x = qx + (ai[0] - qx) * k; y = qy + (ai[1] - qy) * k; }
       if (pj >= 0.5) { const k = (pj - 0.5) * 2; x = ai[0] + (pool[0] - ai[0]) * k; y = ai[1]; }
       const alpha = a * (1 - prog(pj, 0.9, 1));
-      ctx.strokeStyle = `rgba(167,139,250,${0.2 * alpha * (1 - rush)})`; ctx.lineWidth = G.u;
+      ctx.strokeStyle = `rgba(207,165,140,${0.2 * alpha * (1 - rush)})`; ctx.lineWidth = G.u;
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(ai[0], ai[1]); ctx.stroke();
       spark(x, y, 1.4 * G.u, alpha);
     }
     ctx.setLineDash([6 * G.u, 8 * G.u]); ctx.lineDashOffset = -t * 60 * G.u;
-    ctx.strokeStyle = `rgba(196,181,253,${0.4 * a})`; ctx.lineWidth = 1.2 * G.u;
+    ctx.strokeStyle = `rgba(227,203,189,${0.4 * a})`; ctx.lineWidth = 1.2 * G.u;
     ctx.beginPath(); ctx.moveTo(ai[0] + 32 * G.u, ai[1]); ctx.lineTo(pool[0] - 32 * G.u, pool[1]); ctx.stroke();
     ctx.setLineDash([]);
-    polygon(ai[0], ai[1], 30 * G.u, 6, t * 0.6, `rgba(196,181,253,${0.55 * a})`, [3 * G.u, 5 * G.u]);
-    polygon(ai[0], ai[1], 14 * G.u, 4, 0, `rgba(245,243,255,${0.9 * a})`);
+    polygon(ai[0], ai[1], 30 * G.u, 6, t * 0.6, `rgba(227,203,189,${0.55 * a})`, [3 * G.u, 5 * G.u]);
+    polygon(ai[0], ai[1], 14 * G.u, 4, 0, `rgba(252,240,235,${0.9 * a})`);
     spark(ai[0], ai[1], 2.2 * G.u, a);
-    ring(pool[0], pool[1], 26 * G.u, `rgba(129,140,248,${0.85 * a})`, 2 * G.u);
-    spark(pool[0], pool[1], 2 * G.u, a, "165,180,252");
-    label("AI", ai[0], ai[1] + 56 * G.u, `rgba(185,179,207,${0.85 * a})`, 9);
-    label("POOL", pool[0], pool[1] + 56 * G.u, `rgba(185,179,207,${0.85 * a})`, 9);
+    ring(pool[0], pool[1], 26 * G.u, `rgba(164,120,95,${0.85 * a})`, 2 * G.u);
+    spark(pool[0], pool[1], 2 * G.u, a, "216,185,166");
+    label("AI", ai[0], ai[1] + 56 * G.u, `rgba(217,195,186,${0.85 * a})`, 9);
+    label("POOL", pool[0], pool[1] + 56 * G.u, `rgba(217,195,186,${0.85 * a})`, 9);
     let word = null, since = 0;
     for (const [at, text] of DECISIONS) if (t >= at) { word = text; since = t - at; }
     if (word) {
       const submit = word === "SUBMIT";
       const la = a * Math.min(1, since * 6) * (submit ? 1 : 1 - prog(since, 0.32, 0.48));
-      label(submit ? "▲ SUBMIT" : "WAIT", ai[0], ai[1] - 50 * G.u, submit ? `rgba(52,211,153,${la})` : `rgba(245,243,255,${la})`, 12);
+      label(submit ? "▲ SUBMIT" : "WAIT", ai[0], ai[1] - 50 * G.u, submit ? `rgba(52,211,153,${la})` : `rgba(252,240,235,${la})`, 12);
     }
     beam(pool[0] + 26 * G.u, pool[1], prog(t, 13.85, 14.2), 1 - prog(t, 14.3, 14.9), a);
     sweep(t, 13.9, 14.9, a);
@@ -312,8 +314,8 @@
     for (const s of STREAKS) {
       const x = s.x * W, tw = 0.5 + 0.5 * Math.sin(t * 2 + s.ph * TAU);
       const g = ctx.createLinearGradient(0, 0, 0, G.hz);
-      g.addColorStop(0, "rgba(139,92,246,0)");
-      g.addColorStop(1, `rgba(167,139,250,${0.16 * s.a * a * tw})`);
+      g.addColorStop(0, "rgba(185,138,112,0)");
+      g.addColorStop(1, `rgba(207,165,140,${0.16 * s.a * a * tw})`);
       ctx.strokeStyle = g; ctx.lineWidth = G.u;
       ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, G.hz); ctx.stroke();
       spark(x, ((t * s.speed + s.ph) % 1) * G.hz, 1.1 * G.u, 0.8 * a * s.a);
@@ -323,8 +325,8 @@
     ctx.translate(ox, oy); ctx.scale(k, k);
     ctx.lineCap = "round"; ctx.lineWidth = 1.3;
     const g = ctx.createLinearGradient(3, 0, 29, 0);
-    g.addColorStop(0, "#ffffff"); g.addColorStop(0.5, "#c4b5fd"); g.addColorStop(1, "#818cf8");
-    ctx.strokeStyle = g; ctx.shadowColor = "rgba(139,92,246,0.9)"; ctx.shadowBlur = 14 * G.u;
+    g.addColorStop(0, "#ffffff"); g.addColorStop(0.5, "#e3cbbd"); g.addColorStop(1, "#a4785f");
+    ctx.strokeStyle = g; ctx.shadowColor = "rgba(185,138,112,0.9)"; ctx.shadowBlur = 14 * G.u;
     MARK.forEach((path, j) => {
       const p = easeInOut(prog(t, 14.8 + j * 0.1, 15.9 + j * 0.1));
       if (p <= 0) return;
@@ -339,9 +341,9 @@
     if (flare > 0) {
       const r = easeInOut(flare) * Math.hypot(W, H) + 1;
       const f = ctx.createRadialGradient(fx, fy, 0, fx, fy, r);
-      f.addColorStop(0, `rgba(245,243,255,${0.55 * (1 - flare)})`);
-      f.addColorStop(0.6, `rgba(139,92,246,${0.3 * (1 - flare)})`);
-      f.addColorStop(1, "rgba(139,92,246,0)");
+      f.addColorStop(0, `rgba(252,240,235,${0.55 * (1 - flare)})`);
+      f.addColorStop(0.6, `rgba(185,138,112,${0.3 * (1 - flare)})`);
+      f.addColorStop(1, "rgba(185,138,112,0)");
       ctx.fillStyle = f; ctx.fillRect(0, 0, W, H);
     }
   }
