@@ -241,17 +241,17 @@ const FX = (() => {
       ctx.globalCompositeOperation = "lighter";
       const R = Math.max(w, h) * 0.95;
       const warm = ctx.createRadialGradient(hx, hy, 0, hx, hy, R);
-      warm.addColorStop(0, "rgba(255,247,240,1)");
-      warm.addColorStop(0.07, "#e3cbbd");
-      warm.addColorStop(0.3, "#c79a80");
-      warm.addColorStop(0.65, "#8a5a43");
-      warm.addColorStop(1, "rgba(110,58,30,0.05)");
+      warm.addColorStop(0, "rgba(248,245,242,1)");
+      warm.addColorStop(0.07, "#dcd0c8");
+      warm.addColorStop(0.3, "#b09c92");
+      warm.addColorStop(0.65, "#5e4b43");
+      warm.addColorStop(1, "rgba(94,75,67,0.05)");
       const rose = ctx.createRadialGradient(hx, hy, 0, hx, hy, R);
-      rose.addColorStop(0, "rgba(255,243,234,1)");
-      rose.addColorStop(0.08, "#d8b9a6");
-      rose.addColorStop(0.35, "#8a5b43");
-      rose.addColorStop(0.75, "#5e3a28");
-      rose.addColorStop(1, "rgba(138,91,67,0.05)");
+      rose.addColorStop(0, "rgba(244,240,237,1)");
+      rose.addColorStop(0.08, "#c9b8ae");
+      rose.addColorStop(0.35, "#5e4b43");
+      rose.addColorStop(0.75, "#43322b");
+      rose.addColorStop(1, "rgba(94,75,67,0.05)");
       ctx.lineCap = "round";
       for (const st of strands) {
         for (let j = 0; j <= K; j += 1) {
@@ -276,7 +276,7 @@ const FX = (() => {
         blended(st, 1 - p.p, t, a, b, m, P);
         const al = Math.sin(p.p * Math.PI) * dim;
         ctx.globalAlpha = 0.16 * al;
-        ctx.fillStyle = "#e3cbbd";
+        ctx.fillStyle = "#dcd0c8";
         ctx.beginPath(); ctx.arc(P[0], P[1], 5, 0, TAU); ctx.fill();
         ctx.globalAlpha = 0.95 * al;
         ctx.fillStyle = "#ffffff";
@@ -293,22 +293,22 @@ const FX = (() => {
         y -= 120;
         const r = o.r * (w < 700 ? 0.7 : 1), al = o.a * orbVis * light;
         const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-        g.addColorStop(0, `rgba(255,236,222,${al * 1.3})`);
-        g.addColorStop(0.5, `rgba(227,203,189,${al * 0.55})`);
-        g.addColorStop(1, "rgba(185,138,112,0)");
+        g.addColorStop(0, `rgba(240,234,230,${al * 1.3})`);
+        g.addColorStop(0.5, `rgba(220,208,200,${al * 0.55})`);
+        g.addColorStop(1, "rgba(181,161,151,0)");
         ctx.fillStyle = g;
         ctx.beginPath(); ctx.arc(x, y, r, 0, TAU); ctx.fill();
         if (o.depth > 0.65) {
-          ctx.strokeStyle = `rgba(255,240,230,${al * 0.5})`;
+          ctx.strokeStyle = `rgba(242,237,233,${al * 0.5})`;
           ctx.lineWidth = 1;
           ctx.beginPath(); ctx.arc(x, y, r * 0.9, 0, TAU); ctx.stroke();
         }
       }
 
       const glow = ctx.createRadialGradient(hx, hy, 0, hx, hy, Math.max(80, h * 0.22));
-      glow.addColorStop(0, `rgba(245,230,222,${0.55 * heat})`);
-      glow.addColorStop(0.35, `rgba(185,138,112,${0.18 * heat})`);
-      glow.addColorStop(1, "rgba(185,138,112,0)");
+      glow.addColorStop(0, `rgba(236,229,225,${0.55 * heat})`);
+      glow.addColorStop(0.35, `rgba(181,161,151,${0.18 * heat})`);
+      glow.addColorStop(1, "rgba(181,161,151,0)");
       ctx.fillStyle = glow;
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = "source-over";
