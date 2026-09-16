@@ -680,13 +680,27 @@ add(
   B("**Rejected submissions** are logged and counted, and leave the pool free; a Gate A violation, being a defect, stops the daemon."),
   B("**Shutdown** is only clean with the pool free: a stop request waits for any batch in flight to resolve and starts no new batch."),
   B("**Safety:** the settings guard makes mainnet unreachable, keys are generated outside the repository and refused inside it, and the pre-commit secret scan was extended to the JSON key files PyCardano writes, proven on a real generated key."),
+
+  H2("6.14 The Presentation Dashboard"),
+  P("FR-15 asked for a local dashboard of the decision loop. `src/batcher/dashboard/` provides it as a small read-only web application, served by `scripts/dashboard.py` on the loopback interface. Its design rule is that **the page stores no results of its own**: every figure it shows is either recomputed at request time from the committed experiment artefacts, replayed through the simulator itself, or read from the chain. A number that changes in the repository therefore changes on the screen, and a number cannot be quietly edited into the presentation."),
+  ...Tbl("What each view shows, and where its numbers come from", ["View", "Shows", "Source of truth"], [
+    ["Overview", "The problem, the measured chain, the policies compared and the outcome", "Figures quoted from Chapters 4 and 8"],
+    ["Simulator", "One held-out day replayed block by block: queue depth, pool lock, both gate limits, the decision and its reason, and running metrics", "`run_episode` on the same test episodes, seed 42, with the trained LightGBM forecaster"],
+    ["Results", "Median metrics with 95 % confidence intervals for every policy and arrival rate, the trade-off scatter and the latency distribution", "`experiments/phase6-final-evaluation/episode_metrics.parquet`, re-aggregated per request"],
+    ["Live", "The deployed pool, the waiting order queue, the recorded end-to-end swap and the contract addresses", "Blockfrost through the same chain adapter the live batcher uses, plus the Phase 7 manifest"],
+  ], [1500, 4200, 3300]),
+  P("The server is standard library only: a threading HTTP server, four JSON routes and a fixed list of static files. It refuses to bind anything but the loopback interface, so the dashboard cannot be exposed on a network by configuration; it declines a port already in use rather than silently sharing it; unknown paths and attempts to escape the static directory return 404; a request made before the dataset has finished loading returns 503 with the loading message, and a malformed replay request returns 400. The episode library reads D1 in a background thread, so the page answers immediately and reports its own progress."),
+  P("The browser side is plain JavaScript with SVG and canvas — no framework, no build step and no content delivery network — so the Simulator and Results views work with no internet connection and only the Live view needs one. The interface opens with a short generated title sequence that can be skipped with a button, Enter, Space or Escape; the pages themselves use decoded headings, counted-up figures, reveal-on-scroll cards and a background of light strands that changes shape as the page scrolls. All of it is suppressed for viewers whose system asks for reduced motion, and the palette tokens are recorded in `docs/design/palettes.md` so the look can be restored or replaced without hunting through the stylesheet."),
+  ...Callout("Why the dashboard recomputes instead of storing", [
+    "It is the only artefact in the project a viewer can operate, and therefore the most likely place for a number to drift away from the evidence. Its agreement with Table 8.4 is asserted by a test that fails if either side moves.",
+  ]),
 );
 
 // Chapter 7
 add(
   Chapter(7, "Testing"),
   H2("7.1 Strategy and Coverage"),
-  P("In a research codebase the main danger is not a crash but a **quietly wrong number** that survives into the report. The test suite targets that: every number that reaches the report is produced by code covered by a test that would fail if the number were wrong. The suite contains **339 Python tests in 26 files** and **16 Aiken tests** for the validators; the Python suite runs on every push in GitHub Actions and enforces a minimum of 90 % line coverage, and measured coverage is 94.6 %."),
+  P("In a research codebase the main danger is not a crash but a **quietly wrong number** that survives into the report. The test suite targets that: every number that reaches the report is produced by code covered by a test that would fail if the number were wrong. The suite contains **356 Python tests in 27 files** and **16 Aiken tests** for the validators; the Python suite runs on every push in GitHub Actions and enforces a minimum of 90 % line coverage, and measured coverage is 93.9 %."),
   ...Tbl("Test levels", ["Level", "Scope", "Tooling"], [
     ["Unit", "Estimator, gates, fee, metrics, queue, statistics", "pytest"],
     ["Property", "Invariants that must hold for all inputs", "hypothesis"],
@@ -763,6 +777,10 @@ add(
     [".gitignore rule hid src/batcher/build", "CI import failure on a clean checkout", "Anchored rule; test that no source file is ignored"],
     ["Live: Blockfrost’s raw-CBOR datums unreadable", "Every real order silently skipped", "Accept raw CBOR; regression test with datums as Blockfrost returns them"],
     ["Live: users charged for the estimated fee", "First batch rejected by order.ak during evaluation", "Two-pass build; fake chain enforcing the fee rule during evaluation"],
+    ["Dashboard: pool-lock tile counted locked decisions, not slots", "Lock occupancy displayed as 0 % instead of 49 %", "Cumulative locked slots; agrees with the recorded lock occupancy of 0.486"],
+    ["Dashboard: the replay view gave up after one failed request", "Simulator view stuck on “server unreachable” after a restart", "Retry with backoff; Load disabled until the data is ready"],
+    ["Dashboard: a second server silently shared the port on Windows", "Requests split between two processes, stale figures on screen", "Exclusive bind, message naming a free port, regression test"],
+    ["Title sequence dismissed by a reload’s repeated Enter key", "Opening sequence vanished instantly when reloading from the address bar", "Held keys ignored, and all keys ignored for its first 1.2 s"],
   ], [3000, 3000, 3000]),
   H2("7.7 Regression Guards for Corrected Assumptions"),
   ...Tbl("Permanent guards for each architecture decision", ["Decision", "Guard", "Status"], [
@@ -774,6 +792,22 @@ add(
     ["ADR-007 real slot clock", "T-S6", "Live"],
     ["ADR-008 concurrency, not congestion", "T-S5 on a quiet fixture", "Live"],
   ], [3400, 3800, 1800]),
+
+  H2("7.8 Dashboard Tests and Demonstration Scenarios"),
+  P("The dashboard is tested on two levels. Fourteen automated tests in `tests/test_dashboard.py` cover the data it serves and the server that serves it: that a replay payload is exactly the simulator’s own decision log, that no submission is shown while the pool is held, that the per-block gate never exceeds the per-transaction gate, that every payload is strict JSON, that the comparison view reproduces the median tail latency of Table 8.4, that the latency distribution is monotone, that the live view reads a pool and a queue from a fake chain, and that the server answers 503 while loading, 400 for a malformed request and 404 for anything outside its static directory, refuses a non-loopback address and refuses a port already in use."),
+  P("Because a demonstration fails in ways a unit test cannot see, ten end-to-end scenarios were also exercised against the running dashboard. Nine passed outright; the tenth could be confirmed only by inspection, because the operating system’s reduced-motion setting cannot be toggled from the test harness."),
+  ...Tbl("Demonstration scenarios exercised against the running dashboard", ["Scenario", "What was checked", "Result"], [
+    ["Cold start", "Server boots, the title sequence plays, the site takes over with its text visible", "Pass"],
+    ["Reload behaviour", "The sequence plays on every reload and survives a held Enter key; a direct `#page` link loads with that page behind it", "Pass"],
+    ["Skip paths", "Skip button, Enter, Space and Escape, and replaying the sequence from the footer", "Pass"],
+    ["Simulator replay", "Catalogue of 5 policies × 3 rates × 100 days; P2 (N=4) on test-000 ends at 125 s tail latency, 0.128 ADA per user, 49 % locked and 0 expired; play, pause, step and scrub by button and keyboard", "Pass"],
+    ["Results correctness", "Highlights and table match the recorded evaluation: greedy 119 s / 0.157 ADA, P2 125 s / 0.128 ADA, P3 159 s / 0.090 ADA, and E1 at 1,203 s under heavy load", "Pass"],
+    ["Live view, online", "Pool of 110.00 tADA and 909,339 TEAM11 carrying its NFT, empty queue, four swap transactions with explorer links, working refresh", "Pass"],
+    ["Live view, offline", "With an invalid project token the view reports the failure and still lists the four recorded transactions, as valid JSON", "Pass"],
+    ["Server robustness", "Traversal and unknown paths 404, malformed replay 400, busy port refused with guidance, non-loopback bind refused", "Pass"],
+    ["Phone and tablet", "At 375 px and 768 px nothing overflows on any view, the page never scrolls sideways, and the selected tab scrolls into view", "Pass"],
+    ["Reduced motion", "Animation suppressed and the content still readable", "Verified by inspection"],
+  ], [1900, 5400, 1700]),
 );
 
 // Chapter 8
@@ -1011,6 +1045,7 @@ add(
   N("**A validated, deterministic, slot-accurate simulator** that replays recorded mainnet blocks, with paired episodes, conservation checks and four validation checks including a fee replay against real transactions.", "contrib"),
   N("**A constrained optimizer and a masked DQN agent** that never violated a capacity limit, together with an honest analysis showing what drives their behaviour.", "contrib"),
   N("**A reproducible evaluation pipeline** with run manifests, checksummed data and pre-registered non-parametric statistics.", "contrib"),
+  N("**A local, read-only dashboard** that replays a held-out day block by block, re-derives the comparison table from the committed evaluation and reads the deployed pool from preprod, so the work can be demonstrated without a single number being retyped (FR-15).", "contrib"),
   N("**A minimal on-chain DEX whose validator enforces a pass-through batcher fee**, so amortization reaches users, with each user’s slippage floor and batcher authorisation checked by the ledger; and a live batcher that reuses the simulator’s own decision rules, with a shadow mode for watching a policy on live traffic before it submits.", "contrib"),
   H2("9.2 Objectives Revisited"),
   ...Tbl("Goals G1–G6 against the evidence", ["Goal", "Status", "Evidence"], [

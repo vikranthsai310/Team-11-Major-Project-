@@ -185,12 +185,22 @@ two hours). After that no second `POOL` NFT can be minted, by anyone, ever.
 python scripts/dashboard.py            # opens http://127.0.0.1:8050 in the browser
 ```
 
-Four tabs: **How it works**, **Run** (replay a test day block by block — press
-space to play, arrows to step), **Results** and **Live on preprod**. The first
-Run load takes about a minute while the 92-day dataset is read; after that each
-replay is a few seconds and then cached. Run and Results work offline; Live
-needs `BLOCKFROST_PROJECT_ID`. The server binds localhost only and refuses
-anything else.
+Four pages: **Overview** (the story, with the measured chain and the outcome),
+**Simulator** (replay a test day block by block — space plays, arrows step),
+**Results** (the test-split table, trade-off and latency charts) and **Live**
+(the deployed pool, the order queue and the recorded swap on preprod).
+
+The interface opens with a short title sequence. Skip it with the button,
+**Enter**, **Space** or **Escape**; `?intro=15` starts it at a given second for
+rehearsal, and **Replay intro** in the footer plays it again. A direct link such
+as `http://127.0.0.1:8050/#live` opens on that page, behind the sequence.
+
+The first Simulator load takes about a minute while the 92-day dataset is read;
+after that each replay is a few seconds and then cached. Simulator and Results
+work offline; Live needs `BLOCKFROST_PROJECT_ID` and falls back to the recorded
+swap when the API cannot be reached. The server binds localhost only, refuses
+anything else, and refuses a port already in use rather than sharing it. Colour
+tokens are recorded in `docs/design/palettes.md`.
 
 ### 7.2 Running the batcher
 
