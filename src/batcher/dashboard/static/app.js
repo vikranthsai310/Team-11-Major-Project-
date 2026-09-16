@@ -651,6 +651,12 @@ addEventListener("intro:done", () => {
   FX.scramble(active && active.querySelector(".scramble"));
 });
 $("#replay-intro").addEventListener("click", () => { location.href = location.pathname; });
+const TAB_NAMES = ["how", "run", "compare", "live"];
+// a #tab typed or pasted into the address bar switches pages without a reload
+addEventListener("hashchange", () => {
+  const name = location.hash.slice(1);
+  if (TAB_NAMES.includes(name) && !$(`#tab-${name}`).hasAttribute("data-active")) showTab(name);
+});
 const initial = (location.hash || "#how").slice(1);
-showTab(["how", "run", "compare", "live"].includes(initial) ? initial : "how");
+showTab(TAB_NAMES.includes(initial) ? initial : "how");
 Run.ensure(); // start preparing replay data now, so Run is ready by the time it is opened
