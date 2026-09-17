@@ -24,6 +24,15 @@ jobs:
       - name: Lint
         run: ruff check src tests scripts
 
+      # The pre-commit hooks only protect a clone where someone ran `pre-commit install`.
+      # Running the same checks here means a key-shaped string or unformatted code cannot
+      # reach main from a machine without the hooks.
+      - name: Format check
+        run: ruff format --check src tests scripts
+
+      - name: Secret scan
+        run: git ls-files -z | xargs -0 python scripts/check_secrets.py
+
       # --cov-fail-under enforces X-5: without it the coverage target is a
       # suggestion, and the modules that carry the results are exactly the ones
       # that drift first.
