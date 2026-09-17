@@ -7,8 +7,18 @@ Shadow mode reads preprod, decides every block, and builds and signs the batch i
 would send — then logs it and submits nothing. ``--live`` submits.
 
 Ctrl+C asks for a clean stop: the batcher finishes waiting for any batch in flight
-(included or expired) and starts no new one. A second Ctrl+C exits immediately and
-warns if that leaves a batch holding the pool (runbook §7.2).
+(settled at ``--confirmation-depth``, expired, invalidated or rolled back) and starts
+no new one. A second Ctrl+C exits immediately and warns if that leaves a batch
+holding the pool (runbook §7.2).
+
+Blockfrost is wrapped in ``ResilientChain`` (retries with backoff, a circuit
+breaker) unless ``--no-resilience``: an outage is logged as ``api_unavailable``
+and polled through, never decided or submitted on.
+
+Gate A is calibrated unless ``--no-calibration``: limits are held to the stricter
+of the live protocol parameters and the configured constants, and estimates are
+corrected by measured transactions, seeded from the D4 file (``--calibration-seed``)
+when it exists. An oversize build is retried at half the batch size.
 
 Prerequisites: ``onchain/deployment.preprod.json`` from ``deploy_dex.py --submit``,
 ``batcher.skey`` in ``BATCHER_KEY_DIR``, ``BLOCKFROST_PROJECT_ID`` for a preprod
@@ -25,8 +35,15 @@ from pathlib import Path
 
 from pycardano import Network, PaymentSigningKey
 
+from batcher.build.calibration import REFRESH_BLOCKS, CapacityCalibrator, read_d4_rows
 from batcher.config.params import D_MAX
 from batcher.config.settings import load_settings
+from batcher.live.resilience import (
+    DEFAULT_COOLDOWN_SECONDS,
+    DEFAULT_FAILURE_THRESHOLD,
+    DEFAULT_RETRIES,
+    ResilientChain,
+)
 from batcher.onchain import deployment as dex
 from batcher.policy.optimizer import ConstrainedOptimizer
 from batcher.policy.static import Greedy
@@ -45,6 +62,11 @@ def human(record: dict) -> str:
         )
     else:
         detail += "  WAIT"
+    if record.get("build_attempts"):
+        detail += f"  shrunk {record['build_attempts']}"
+    capacity = record.get("capacity") or {}
+    for warning in capacity.get("warnings", []):
+        detail += f"  WARNING {warning}"
     return f"{base}  {detail}  [{record['resolution']}]"
 
 
@@ -61,6 +83,45 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--poll-seconds", type=float, default=10.0)
     parser.add_argument("--d4", type=Path, default=D4_DEFAULT)
     parser.add_argument("--key-dir", type=Path, default=None)
+    parser.add_argument(
+        "--confirmation-depth",
+        type=int,
+        default=None,
+        help="blocks a batch must be buried under before it is settled (default 3)",
+    )
+    parser.add_argument("--api-retries", type=int, default=DEFAULT_RETRIES)
+    parser.add_argument(
+        "--breaker-failures",
+        type=int,
+        default=DEFAULT_FAILURE_THRESHOLD,
+        help="consecutive API failures that open the circuit breaker",
+    )
+    parser.add_argument("--breaker-cooldown", type=float, default=DEFAULT_COOLDOWN_SECONDS)
+    parser.add_argument(
+        "--no-resilience",
+        action="store_true",
+        help="call Blockfrost directly: no retries, breaker or outage handling",
+    )
+    parser.add_argument(
+        "--no-calibration",
+        action="store_true",
+        help="use the static Gate A: configured limits, uncorrected estimates, no retry",
+    )
+    parser.add_argument(
+        "--calibration-seed",
+        type=Path,
+        default=D4_DEFAULT,
+        help="D4 rows to seed the estimate corrections from (default: the D4 file)",
+    )
+    parser.add_argument(
+        "--no-calibration-seed", action="store_true", help="start the corrections at 1.0"
+    )
+    parser.add_argument(
+        "--protocol-refresh-blocks",
+        type=int,
+        default=REFRESH_BLOCKS,
+        help="blocks between protocol parameter reads (a new epoch also triggers one)",
+    )
     args = parser.parse_args(argv)
 
     settings = load_settings()  # refuses anything but preprod
@@ -79,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
     from pycardano import BlockFrostChainContext
 
     from batcher.live.chain import BlockfrostChain
-    from batcher.live.daemon import LiveBatcher
+    from batcher.live.daemon import CONFIRMATION_DEPTH, LiveBatcher
 
     deployment = dex.load()
     scripts = dex.scripts_for(deployment)  # refuses scripts that no longer match the deployment
@@ -97,16 +158,36 @@ def main(argv: list[str] | None = None) -> int:
         if args.log_json
         else (lambda r: print(human(r), flush=True))
     )
+    chain = BlockfrostChain(context)
+    if not args.no_resilience:
+        chain = ResilientChain(
+            chain,
+            retries=args.api_retries,
+            failure_threshold=args.breaker_failures,
+            cooldown_seconds=args.breaker_cooldown,
+        )
+    calibrator = None
+    if not args.no_calibration:
+        calibrator = CapacityCalibrator(refresh_blocks=args.protocol_refresh_blocks)
+        if not args.no_calibration_seed:
+            seeded = calibrator.seed_from_d4(read_d4_rows(args.calibration_seed))
+            factors = {d: round(f, 3) for d, f in calibrator.factors.items()}
+            print(f"calibration seeded from {seeded} D4 rows; factors {factors}", file=sys.stderr)
     batcher = LiveBatcher(
-        BlockfrostChain(context),
+        chain,
         policy,
         deployment,
         scripts,
         PaymentSigningKey.load(str(skey_path)),
         submit=args.live,
         d_max=args.d_max,
+        confirmation_depth=(
+            CONFIRMATION_DEPTH if args.confirmation_depth is None else args.confirmation_depth
+        ),
         emit=emit,
         d4_path=args.d4 if args.live else None,
+        calibration=not args.no_calibration,
+        calibrator=calibrator,
     )
 
     def on_interrupt(_signum, _frame):

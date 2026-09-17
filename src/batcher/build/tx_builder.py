@@ -58,6 +58,8 @@ FEE_BUFFER_LOVELACE = 10_000
 # A rebuilt fee within this distance of the planned one is accepted as settled.
 FEE_TOLERANCE_LOVELACE = 2 * FEE_BUFFER_LOVELACE
 MAX_FEE_ROUNDS = 4
+# An order's owner is a payment key hash (blake2b-224).
+OWNER_HASH_BYTES = 28
 
 
 class NothingToBatch(RuntimeError):
@@ -234,44 +236,85 @@ def datum_bytes(datum) -> bytes:
 
 
 def read_orders(
-    utxos: Sequence[UTxO], deployment: Deployment, network
+    utxos: Sequence[UTxO],
+    deployment: Deployment,
+    network,
+    rejected: list[tuple[str, int, str]] | None = None,
 ) -> list[tuple[UTxO, OrderUtxo]]:
     """Orders at the order script, in the order the chain returned them.
 
-    Anyone can send anything to a script address, so a UTxO whose datum does not
-    decode, or a BtoA order not holding the tokens it offers, is ignored rather
-    than allowed to break the batch.
+    Anyone can send anything to a script address, so a UTxO that fails admission
+    (``order_rejection``) is ignored rather than allowed to break the batch. Pass
+    ``rejected`` to collect ``(tx_hash, index, reason)`` for each one skipped.
     """
     found = []
     for utxo in utxos:
-        datum = utxo.output.datum
-        if datum is None:
-            continue
+        ref = (str(utxo.input.transaction_id), utxo.input.index)
         try:
-            order = OrderDatum.from_cbor(datum_bytes(datum))
-        except (DeserializeException, ValueError, TypeError, KeyError):
+            order, reason = _admit(utxo, deployment, network)
+        except Exception as error:  # a hostile datum must never crash the queue read
+            order, reason = None, f"unreadable order: {type(error).__name__}"
+        if order is None:
+            if rejected is not None:
+                rejected.append((*ref, reason))
             continue
-
-        direction = A_TO_B if isinstance(order.direction, AtoB) else B_TO_A
-        held = _quantity(utxo.output.amount, deployment, deployment.token_name)
-        if direction == B_TO_A and held < order.amount_in:
-            continue
-        found.append(
-            (
-                utxo,
-                OrderUtxo(
-                    tx_hash=str(utxo.input.transaction_id),
-                    index=utxo.input.index,
-                    lovelace=_coin(utxo.output.amount),
-                    direction=direction,
-                    amount_in=order.amount_in,
-                    min_out=order.min_out,
-                    margin=order.margin,
-                    return_address=str(order.return_address.to_address(network)),
-                ),
-            )
-        )
+        found.append((utxo, order))
     return found
+
+
+def order_rejection(order: OrderDatum) -> str | None:
+    """Why a decoded order datum is not admitted to the queue, or ``None``.
+
+    The validators alone do not protect the batcher here: a negative ``margin``
+    plans a payout larger than the user paid, which the batcher's own wallet
+    would cover, and non-positive amounts make no sense to execute.
+    """
+    if order.amount_in <= 0:
+        return f"amount_in {order.amount_in} is not positive"
+    if order.min_out < 0:
+        return f"min_out {order.min_out} is negative"
+    if order.margin < 0:
+        return f"margin {order.margin} is negative"
+    if len(order.owner) != OWNER_HASH_BYTES:
+        return f"owner is {len(order.owner)} bytes, not a key hash"
+    return None
+
+
+def _admit(utxo: UTxO, deployment: Deployment, network) -> tuple[OrderUtxo | None, str]:
+    """One UTxO at the order script, as an order or the reason it is refused."""
+    datum = utxo.output.datum
+    if datum is None:
+        return None, "no datum"
+    try:
+        order = OrderDatum.from_cbor(datum_bytes(datum))
+    except (DeserializeException, ValueError, TypeError, KeyError):
+        return None, "datum is not an order"
+    if not all(isinstance(v, int) for v in (order.amount_in, order.min_out, order.margin)):
+        return None, "order amounts are not integers"
+    if (reason := order_rejection(order)) is not None:
+        return None, reason
+
+    direction = A_TO_B if isinstance(order.direction, AtoB) else B_TO_A
+    held = _quantity(utxo.output.amount, deployment, deployment.token_name)
+    if direction == B_TO_A and held < order.amount_in:
+        return None, "BtoA order does not hold the tokens it offers"
+    try:
+        return_address = str(order.return_address.to_address(network))
+    except Exception as error:  # e.g. a credential of the wrong length
+        return None, f"return address does not decode: {type(error).__name__}"
+    return (
+        OrderUtxo(
+            tx_hash=str(utxo.input.transaction_id),
+            index=utxo.input.index,
+            lovelace=_coin(utxo.output.amount),
+            direction=direction,
+            amount_in=order.amount_in,
+            min_out=order.min_out,
+            margin=order.margin,
+            return_address=return_address,
+        ),
+        "",
+    )
 
 
 def read_pool(utxos: Sequence[UTxO], deployment: Deployment) -> UTxO:
