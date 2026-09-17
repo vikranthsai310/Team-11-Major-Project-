@@ -38,6 +38,12 @@ from batcher.sim.orders import ArrivalProcess, OrderStream
 STATE_DIM = 11
 WAIT_ACTION = 0
 N_MAX_REFERENCE = 40  # normalisation ceiling for gate_a_max_n, not a ledger limit
+# How ``step`` repairs an action the mask forbids. "first" is the recorded
+# behaviour (Phases 5-6): the lowest legal index, which is a batch of n=1 when WAIT
+# is masked at the deadline. "largest" submits the Gate A maximum when submission
+# is forced, as the simulator's ``_enforce`` does, and otherwise the legal action
+# whose batch size is nearest the one requested.
+ILLEGAL_ACTION_MODES = ("first", "largest")
 SECONDS_PER_DAY = 24 * 60 * 60
 
 
@@ -92,12 +98,19 @@ class BatchingEnv(gym.Env):
         ttl_slots: int = TTL_SLOTS,
         latency_power: int = 2,
         seed: int | None = None,
+        illegal_action: str = "first",
     ):
         """``latency_power`` is 2 as specified; ablation A4 sets it to 1 to ask
-        whether the quadratic tail penalty is what does the work."""
+        whether the quadratic tail penalty is what does the work.
+
+        ``illegal_action`` selects the mask repair (see ``ILLEGAL_ACTION_MODES``).
+        The default keeps the recorded behaviour; "largest" is opt-in."""
         super().__init__()
         if latency_power not in (1, 2):
             raise ValueError("latency_power must be 1 (A4) or 2 (specified)")
+        if illegal_action not in ILLEGAL_ACTION_MODES:
+            raise ValueError(f"illegal_action must be one of {ILLEGAL_ACTION_MODES}")
+        self.illegal_action = illegal_action
         self.latency_power = latency_power
         self.blocks = blocks.reset_index(drop=True)
         self.process = process
@@ -155,7 +168,7 @@ class BatchingEnv(gym.Env):
         # cannot act illegally.
         if not mask[action]:
             self.mask_hits += 1
-            action = int(np.argmax(mask))
+            action = self._repair(action, mask)
 
         self.actions_taken.append(action)
         n = self._action_to_n(action)
@@ -202,6 +215,19 @@ class BatchingEnv(gym.Env):
         return mask
 
     # --- internals -----------------------------------------------------------
+
+    def _repair(self, action: int, mask: np.ndarray) -> int:
+        """Map an illegal action to a legal one, per ``illegal_action``."""
+        if self.illegal_action == "first":
+            return int(np.argmax(mask))
+
+        legal = np.flatnonzero(mask)
+        sizes = [0, *self._buckets()]  # requested batch size per action index
+        if not mask[WAIT_ACTION]:
+            # Submission is forced: the largest legal batch, never a token n=1.
+            return int(max(legal, key=lambda index: (sizes[index], index)))
+        requested = sizes[action] if 0 <= action < len(sizes) else 0
+        return int(min(legal, key=lambda index: (abs(sizes[index] - requested), sizes[index])))
 
     def _buckets(self) -> list[int]:
         return [*ACTION_BUCKETS, self._gate_a_max()]

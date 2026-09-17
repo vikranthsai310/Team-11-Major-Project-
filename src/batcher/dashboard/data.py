@@ -90,6 +90,13 @@ def forecast_series(blocks: pd.DataFrame, forecaster) -> dict[int, float]:
     return {int(s): float(p) for s, p in zip(blocks["abs_slot"], predictions, strict=True)}
 
 
+def forecaster_label(forecaster) -> str:
+    """What actually produced the forecast — never "lgbm" when E4 stood in for it."""
+    if forecaster is None:
+        return "none"
+    return str(getattr(forecaster, "label", None) or forecaster.name)
+
+
 def gate_b_max(fill_hat: float | None, gate_a: int | None) -> int | None:
     """Largest batch predicted to fit the next block, never above the Gate A cap."""
     if fill_hat is None or gate_a is None:
@@ -191,6 +198,7 @@ class EpisodeLibrary:
         self.count = count
         self.state = "idle"
         self.message = ""
+        self.forecaster = ""
         self._cache: dict[tuple, dict] = {}
         self._lock = threading.Lock()
 
@@ -219,6 +227,7 @@ class EpisodeLibrary:
                 "lgbm": lgbm_load(self.models, horizon=FORECAST_HORIZON),
                 "oracle": Oracle(horizon=FORECAST_HORIZON),
             }
+            self.forecaster = forecaster_label(self.forecasters["lgbm"])
             self.frame = frame
             self.congested = [
                 float((e.blocks(frame)["fill_pct"] > 0.80).mean()) for e in self.episodes
@@ -237,6 +246,7 @@ class EpisodeLibrary:
         return {
             "state": self.state,
             "message": self.message,
+            "forecaster": self.forecaster,
             "policies": [{"key": k, "label": v[0]} for k, v in REPLAY_POLICIES.items()],
             "rates": RATES,
             "episodes": episodes,
@@ -281,6 +291,7 @@ class EpisodeLibrary:
             rate=rate,
         )
         payload["congested"] = self.congested[index]
+        payload["forecaster"] = forecaster_label(forecaster)
         with self._lock:
             self._cache[key] = payload
         return payload

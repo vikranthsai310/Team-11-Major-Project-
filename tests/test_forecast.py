@@ -162,7 +162,17 @@ def test_cached_forecaster_matches_direct_prediction(frame):
 
 
 def test_cached_forecaster_is_safe_on_an_unknown_slot(frame):
+    # An unknown slot must never read as an empty block: that would switch Gate B off
+    # exactly when the forecaster knows least. The default is a conservative high fill.
     cached = CachedForecaster(MovingAverage()).prepare(frame.head(10))
+    unknown = next(iter(frame.tail(1).itertuples()))
+    fills = cached.predict(unknown)
+    assert all(fill > 0.0 for fill in fills)
+    assert cached.last_was_fallback
+
+
+def test_the_old_empty_block_reading_is_still_available_on_request(frame):
+    cached = CachedForecaster(MovingAverage(), on_missing="empty").prepare(frame.head(10))
     unknown = next(iter(frame.tail(1).itertuples()))
     assert cached.predict(unknown) == (0.0, 0.0, 0.0)
 

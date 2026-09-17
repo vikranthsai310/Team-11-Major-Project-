@@ -6,6 +6,12 @@ periods; the tail is where a badly timed batcher actually hurts users.
 An episode in which nothing settled returns ``None`` for latency metrics rather
 than a silent NaN — a NaN propagates into a mean and quietly poisons a results
 table, which is exactly the failure mode this project's testing exists to catch.
+
+**Settled-only latency flatters a policy that lets orders expire**: an order that
+waited an hour and was evicted simply vanishes from ``l_mean``/``l_p95``. The
+``*_all`` metrics are the censored counterparts: each expired order contributes
+its wait until expiry (``ttl_slot - arrival_slot``), a lower bound on what its
+latency would have been. The original metrics are unchanged beside them.
 """
 
 from __future__ import annotations
@@ -34,6 +40,11 @@ class Metrics:
     submissions: int
     settled: int
     gate_a_violations: int
+    # Censored (settled + expired-at-expiry) latency; appended so existing
+    # columns keep their names, order and values.
+    l_mean_all: float | None = None
+    l_p95_all: float | None = None
+    w_max_all: int | None = None
 
     def as_dict(self) -> dict:
         return asdict(self)
@@ -54,8 +65,19 @@ def jain_index(values) -> float | None:
     return float(np.sum(array) ** 2 / denominator)
 
 
+def censored_latencies(result: EpisodeResult) -> list[int]:
+    """Settled latencies plus, for each expired order, its wait until expiry.
+
+    Orders still queued at the end of the window are not included: the result
+    does not record the window's last slot, so their wait has no defined bound.
+    """
+    expired = [max(0, int(order.ttl_slot) - int(order.arrival_slot)) for order in result.expired]
+    return sorted([*(order.latency for order in result.settled), *expired])
+
+
 def compute(result: EpisodeResult) -> Metrics:
     latencies = sorted(order.latency for order in result.settled)
+    censored = censored_latencies(result)
     arrived = result.orders_arrived
 
     return Metrics(
@@ -76,6 +98,9 @@ def compute(result: EpisodeResult) -> Metrics:
         submissions=len(result.submissions),
         settled=len(result.settled),
         gate_a_violations=result.gate_a_violations,
+        l_mean_all=float(np.mean(censored)) if censored else None,
+        l_p95_all=float(np.percentile(censored, 95)) if censored else None,
+        w_max_all=int(max(censored)) if censored else None,
     )
 
 

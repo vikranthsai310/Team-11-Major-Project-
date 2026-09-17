@@ -9,11 +9,16 @@ features that are all computable at t (enforced by
 or corrupt, :func:`load` returns the E4 moving average tagged ``model="ma"``
 rather than raising (T-N4) — a batcher that stops deciding because a model file
 went bad is worse than one that decides with a weaker forecast.
+
+The fallback is **explicit, not silent**: it is a :class:`MovingAverageFallback`
+(``is_fallback``, a human ``label`` and the ``reason``) and a warning is logged,
+so no caller can present it as LightGBM. Its predictions are E4's exactly.
 """
 
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -22,6 +27,8 @@ import pandas as pd
 from batcher.config.params import FORECAST_HORIZON
 from batcher.data.features import feature_columns
 from batcher.forecast.baseline import MovingAverage
+
+logger = logging.getLogger(__name__)
 
 DEFAULT_PARAMS = {
     "objective": "regression_l1",  # L1 matches MAE, the reported metric
@@ -38,6 +45,8 @@ DEFAULT_PARAMS = {
 
 class LightGBMForecaster:
     name = "lgbm"
+    label = "LightGBM"
+    is_fallback = False
 
     def __init__(self, horizon: int = FORECAST_HORIZON, params: dict | None = None):
         self.horizon = horizon
@@ -111,6 +120,21 @@ class LightGBMForecaster:
         return directory
 
 
+class MovingAverageFallback(MovingAverage):
+    """E4 standing in for a LightGBM model that could not be loaded.
+
+    ``name`` stays ``"ma"`` — that is what it computes, and the Phase 6 guard
+    (``lgbm.name != "lgbm"``) keys on it — while ``label`` says why it is here.
+    """
+
+    is_fallback = True
+
+    def __init__(self, reason: str, horizon: int = FORECAST_HORIZON):
+        super().__init__(horizon=horizon)
+        self.reason = reason
+        self.label = f"moving average ({reason})"
+
+
 def load(directory: Path, horizon: int = FORECAST_HORIZON):
     """Load a saved forecaster, or fall back to E4 if anything is wrong (T-N4)."""
     try:
@@ -124,5 +148,16 @@ def load(directory: Path, horizon: int = FORECAST_HORIZON):
             for step in range(1, meta["horizon"] + 1)
         ]
         return forecaster
-    except Exception:
-        return MovingAverage(horizon=horizon)
+    except FileNotFoundError as error:
+        reason = "LightGBM model files not found"
+        detail = error
+    except Exception as error:  # corrupt or incompatible artifact: still never block
+        reason = "LightGBM model files could not be loaded"
+        detail = error
+    logger.warning(
+        "forecaster at %s unavailable (%s: %s); falling back to the moving average",
+        directory,
+        type(detail).__name__,
+        detail,
+    )
+    return MovingAverageFallback(reason, horizon=horizon)
