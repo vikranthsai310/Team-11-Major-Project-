@@ -91,13 +91,26 @@ def run_episode(
     ttl_slots: int = TTL_SLOTS,
     episode_id: str = "ep",
     policy_name: str | None = None,
+    chain_depth: int = 1,
 ) -> EpisodeResult:
-    """Replay ``blocks`` against ``policy``. Deterministic given ``rng``."""
+    """Replay ``blocks`` against ``policy``. Deterministic given ``rng``.
+
+    ``chain_depth`` is how many batches may be pending at once. At the default of 1
+    the pool is locked until its batch resolves, exactly as every recorded result
+    was produced. Above 1 the batcher **chains**: a new batch spends the pool output
+    of the batch still in the mempool, so at one decision point it can stack further
+    batches while orders remain. Chained batches resolve strictly in order — a child
+    can land in the same block as its parent, never before it — they must fit the
+    block together, and a parent that is rolled back or expires takes every batch
+    built on it down too.
+    """
+    if chain_depth < 1:
+        raise ValueError("chain_depth must be at least 1")
     queue = OrderQueue()
     pool = ConstantProductPool()
     result = EpisodeResult()
 
-    in_flight: InFlight | None = None
+    chain: list[InFlight] = []
     previous_slot = int(blocks.iloc[0]["abs_slot"]) - 1
     arrival_prices: dict[str, float] = {}
 
@@ -116,23 +129,50 @@ def run_episode(
 
         block_size, block_mem, block_steps = _block_usage(block)
 
-        # 2. resolve any in-flight batch against the REAL recorded block
-        if in_flight is not None:
+        # 2. resolve pending batches against the REAL recorded block, parent first
+        if chain:
             result.locked_slots += max(0, slot - previous_slot)
-            in_flight.blocks_waited += 1
-
-            if gate_b(
-                in_flight.n,
-                block_size,
-                block_mem,
-                block_steps,
-                [o.size_bytes for o in in_flight.orders],
-                [o.mem_exunits for o in in_flight.orders],
-                [o.step_exunits for o in in_flight.orders],
-            ):
-                if rng.random() < ROLLBACK_PROBABILITY:
-                    queue.give_back(in_flight.orders)
-                    result.rollbacks += 1
+            used_size, used_mem, used_steps = block_size, block_mem, block_steps
+            while chain:
+                batch = chain[0]
+                batch.blocks_waited += 1
+                if gate_b(
+                    batch.n,
+                    used_size,
+                    used_mem,
+                    used_steps,
+                    [o.size_bytes for o in batch.orders],
+                    [o.mem_exunits for o in batch.orders],
+                    [o.step_exunits for o in batch.orders],
+                ):
+                    if rng.random() < ROLLBACK_PROBABILITY:
+                        # Undoing a parent invalidates every batch chained on it.
+                        for undone in reversed(chain):
+                            queue.give_back(undone.orders)
+                        chain.clear()
+                        result.rollbacks += 1
+                        _log(
+                            result,
+                            block,
+                            policy_name,
+                            episode_id,
+                            queue,
+                            None,
+                            slot,
+                            locked=True,
+                            resolution=Resolution.ROLLED_BACK.value,
+                        )
+                        break
+                    _settle(result, pool, batch, slot, arrival_prices)
+                    chain.pop(0)
+                    # A child landing in this same block shares its remaining space.
+                    used_size += batch.size
+                    used_mem += batch.mem
+                    used_steps += batch.steps
+                elif batch.ttl_slot < slot:
+                    for undone in reversed(chain):
+                        queue.give_back(undone.orders)
+                    chain.clear()
                     _log(
                         result,
                         block,
@@ -142,26 +182,12 @@ def run_episode(
                         None,
                         slot,
                         locked=True,
-                        resolution=Resolution.ROLLED_BACK.value,
+                        resolution=Resolution.EXPIRED.value,
                     )
+                    break
                 else:
-                    _settle(result, pool, in_flight, slot, arrival_prices)
-                in_flight = None
-            elif in_flight.ttl_slot < slot:
-                queue.give_back(in_flight.orders)
-                _log(
-                    result,
-                    block,
-                    policy_name,
-                    episode_id,
-                    queue,
-                    None,
-                    slot,
-                    locked=True,
-                    resolution=Resolution.EXPIRED.value,
-                )
-                in_flight = None
-            else:
+                    break
+            if len(chain) >= chain_depth:
                 # Head-of-line blocking: no decision exists while the pool is held.
                 _log(result, block, policy_name, episode_id, queue, None, slot, locked=True)
                 previous_slot = slot
@@ -170,41 +196,47 @@ def run_episode(
         # 3. forecast
         fill_hat = forecaster.predict(block) if forecaster is not None else (0.0, 0.0, 0.0)
 
-        # 4. observe
-        sizes, mems, steps = queue.dimensions()
-        gate_a_max = max_n_satisfying_gate_a(sizes, mems, steps)
-        obs = Observation(
-            slot=slot,
-            queue_depth=len(queue),
-            oldest_wait=queue.oldest_wait(slot),
-            queue_sizes=sizes,
-            queue_mem=mems,
-            queue_steps=steps,
-            fill_hat=tuple(fill_hat),
-            mem_headroom=MAX_BLOCK_EX_MEM - block_mem,
-            step_headroom=MAX_BLOCK_EX_STEPS - block_steps,
-            pool_locked=False,
-            slots_in_flight=0,
-            gate_a_max_n=gate_a_max,
-        )
+        # 4-5. observe, decide, then repair the decision structurally. With chaining the
+        #      batcher asks again while it can still stack a batch and orders remain; at
+        #      chain_depth 1 the policy is asked exactly once per block.
+        while True:
+            sizes, mems, steps = queue.dimensions()
+            gate_a_max = max_n_satisfying_gate_a(sizes, mems, steps)
+            obs = Observation(
+                slot=slot,
+                queue_depth=len(queue),
+                oldest_wait=queue.oldest_wait(slot),
+                queue_sizes=sizes,
+                queue_mem=mems,
+                queue_steps=steps,
+                fill_hat=tuple(fill_hat),
+                mem_headroom=MAX_BLOCK_EX_MEM - block_mem,
+                step_headroom=MAX_BLOCK_EX_STEPS - block_steps,
+                pool_locked=False,
+                slots_in_flight=0,
+                gate_a_max_n=gate_a_max,
+            )
 
-        # 5. decide, then repair the decision structurally
-        action = policy.decide(obs)
-        action = _enforce(action, obs, d_max)
+            action = policy.decide(obs)
+            action = _enforce(action, obs, d_max)
+            submitted = action.submit and action.n > 0
 
-        if action.submit and action.n > 0:
-            taken = queue.take(action.n)
-            in_flight = build_in_flight(taken, slot, ttl_slots)
-            result.submissions.append(len(taken))
-            result.fees.append(in_flight.fee)
+            if submitted:
+                taken = queue.take(action.n)
+                batch = build_in_flight(taken, slot, ttl_slots)
+                chain.append(batch)
+                result.submissions.append(len(taken))
+                result.fees.append(batch.fee)
 
-        _log(result, block, policy_name, episode_id, queue, action, slot, locked=False, obs=obs)
+            _log(result, block, policy_name, episode_id, queue, action, slot, locked=False, obs=obs)
+            if not submitted or len(chain) >= chain_depth or len(queue) == 0:
+                break
         previous_slot = slot
 
     result.still_queued = list(queue.orders)
     result.expired = list(queue.expired)
-    if in_flight is not None:
-        result.still_queued.extend(in_flight.orders)
+    for batch in chain:
+        result.still_queued.extend(batch.orders)
     return result
 
 
