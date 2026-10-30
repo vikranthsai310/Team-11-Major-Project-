@@ -15,7 +15,7 @@ Vignana Bharathi Institute of Technology · AY 2026–27
 
 An intelligent off-chain **batcher** for a Cardano DEX. A liquidity pool is a single UTXO that admits one batch per block, so every order queues behind whatever batch is currently in flight. This system decides when to submit and how many orders to include — managing that shared lock under uncertain confirmation time, and reading the chain before deciding, which the fixed-rule batchers deployed today do not.
 
-It is a **server-side process**. There is no website, no browser extension and no wallet code. A wallet can only see its own owner's funds, so it has nothing to aggregate; batching is inherently an aggregator's job.
+It is a **server-side process**. There is no user-facing website, no browser extension and no wallet code. A wallet can only see its own owner's funds, so it has nothing to aggregate; batching is inherently an aggregator's job. A localhost-only presentation dashboard shows the batcher's decisions, the results and the live preprod deployment (see [Running it](#running-it)).
 
 ## Why it is needed
 
@@ -66,11 +66,25 @@ experiments/  run manifests and results
 
 ## Status
 
-Phases 0–4 complete: foundation, data collection and premise validation, simulator and tuned baselines, congestion forecaster, and the constrained optimizer. 224 tests. The project has a defensible result; Phase 5 (RL) is an upgrade. Task-level checklist: [`docs/18-TODO.md`](docs/18-TODO.md), derived from [`docs/12-ROADMAP.md`](docs/12-ROADMAP.md).
+Phases 0–7 complete: foundation, data collection and premise validation, simulator and tuned baselines, congestion forecaster, constrained optimizer, the RL agent (five DQN seeds), the test-split evaluation with ablations, and the on-chain DEX on preprod with the live batcher and the dashboard. 488 tests pass; one is skipped where the Aiken compiler is not installed. Task-level checklist: [`docs/18-TODO.md`](docs/18-TODO.md), derived from [`docs/12-ROADMAP.md`](docs/12-ROADMAP.md).
 
 D1 is collected and verified — 388,781 blocks over 92 days — and the simulator replays it against tuned static baselines with zero Gate A violations.
 
-The first real question the project must answer is **whether Cardano block congestion is predictable at a 20-second horizon** — Phase 1 answers it before anything is built on top of it.
+Headline results, 100 paired test days ([`main_results.md`](experiments/phase6-final-evaluation/main_results.md)): P2 cuts cost per user by 19 % against greedy for about 5 % more tail latency; the DQN agent cuts it by 43 % at a larger latency cost; no policy beats greedy on speed on today's lightly loaded chain; zero capacity violations in every run. A batch settled end to end on preprod (T-O6).
+
+Still open: the transaction-size estimator is calibrated from a single measured batch and does not yet meet its ±5 % / ±10 % target, so `07-CONSTRAINTS-COST-MODEL.md` §4 is not yet updated from measurement.
+
+## Running it
+
+After the setup under [Development](#development):
+
+```bash
+python scripts/dashboard.py                    # http://127.0.0.1:8050 — Overview, Simulator, Results, Live
+python scripts/run_batcher.py --policy p2      # shadow mode on preprod: decides and builds, submits nothing
+pytest tests/                                  # full suite
+```
+
+The Simulator view replays the test days and needs `data/processed/d1_blocks_*.parquet` (gitignored). It uses the trained forecaster in `experiments/phase3-forecaster/models/` (also gitignored) and falls back to the moving average without it; rebuild it with `python scripts/train_forecaster.py --data data/processed/d1_blocks_20260613_20260913.parquet`, which reproduces the committed scores exactly. The Live view needs `BLOCKFROST_PROJECT_ID` in `.env`. `run_batcher.py` also needs `batcher.skey` in `BATCHER_KEY_DIR`, which must be the key the DEX was deployed with.
 
 ## Development
 

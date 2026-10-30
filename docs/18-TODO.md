@@ -777,10 +777,10 @@ owed.
 retrained A3, and A4 (linear vs quadratic latency penalty).
 
 ### ✅ Phase 5 exit gate
-- [ ] T-L3 passes — a random agent cannot act illegally
-- [ ] T-L4 passes — reward terms comparable in magnitude
-- [ ] T-L6 passes — no policy collapse
-- [ ] Five seeds trained, mean and std reported
+- [x] T-L3 passes — a random agent cannot act illegally
+- [x] T-L4 passes — reward terms comparable in magnitude
+- [x] T-L6 passes — no policy collapse (0 of 5 seeds collapsed)
+- [x] Five seeds trained, mean and std reported
 - [ ] **P3 beating P2 is not required.** R2 accepts either outcome. Do **not** tune P3 until it wins on the test split — that is the one action that would invalidate the evaluation.
 
 ---
@@ -1028,9 +1028,9 @@ test split a second time, which is the worse violation of the two.
 
 ### ✅ Phase 6 exit gate
 - [ ] Every claim in the report traceable to a metric with a confidence interval
-- [ ] Test split used exactly once, with a written record
-- [ ] Threats to validity written
-- [ ] Full test suite passes with no unexplained skips
+- [x] Test split used exactly once, with a written record (`phase6-final-evaluation/manifest.json`, `forced_rerun: false`)
+- [x] Threats to validity written (`09-EVALUATION-PROTOCOL.md` §9, report §8.13)
+- [x] Full test suite passes with no unexplained skips — 488 passed, 1 skipped (`test_blueprint.py` needs the Aiken compiler)
 
 **→ Review 3 material:** F5, ablations, statistics, optional live demo.
 
@@ -1127,7 +1127,7 @@ and field order against `plutus.json`, and `tests/test_blueprint.py` checks that
 PyCardano derives the same script hashes the compiler recorded.
 
 ### ✅ Phase 7 exit gate
-- [ ] T-O1 … T-O6 pass, including the security tests T-O2 and T-O3
+- [x] T-O1 … T-O6 pass, including the security tests T-O2 and T-O3
 - [ ] Estimator within ±5 % size and ±10 % execution units against D4
 - [ ] `07-CONSTRAINTS-COST-MODEL.md` §4 updated from measurement
 
