@@ -151,7 +151,7 @@ const Run = {
       $("#run-body").hidden = false;
       $("#run-title").textContent = data.policy_label;
       const rateNames = { light: "light traffic", matched: "normal traffic", heavy: "heavy traffic" };
-      $("#run-sub").textContent = ` · ${data.episode_id} · ${rateNames[data.rate]} · ${nf.format(data.rows.length)} blocks`;
+      $("#run-sub").textContent = `${data.episode_id} · ${rateNames[data.rate]} · ${nf.format(data.rows.length)} blocks`;
       $("#run-scrub").max = String(data.rows.length - 1);
       $("#q-dmax").textContent = secs(data.d_max);
       this.go(0);
@@ -488,8 +488,8 @@ const Compare = {
     svgEl("text", { x: (L + W - R) / 2, y: H - 8, "text-anchor": "middle" }, svg, "cost per user (ADA)  ← cheaper");
     svgEl("text", { x: 14, y: (T + H - B) / 2, "text-anchor": "middle", transform: `rotate(-90 14 ${(T + H - B) / 2})` }, svg, "tail latency p95 (s)  ← faster");
 
-    const placed = [];
-    pts.sort((a, b) => a.l_p95[0] - b.l_p95[0]).forEach((p, idx) => {
+    // Dots first, labels after, so no dot is painted over a label.
+    const dots = pts.sort((a, b) => a.l_p95[0] - b.l_p95[0]).map((p, idx) => {
       const color = cssVar(FAMILY_COLOR[p.family] || "--muted");
       const cx = sx(p.c_user[0] / 1e6), cy = sy(p.l_p95[0]);
       const delay = `${0.15 + idx * 0.08}s`;
@@ -499,12 +499,36 @@ const Compare = {
       const hollow = p.family === "reference";
       if (!hollow) svgEl("circle", { cx, cy, r: 12, fill: color, opacity: 0.18, class: "pop", style: `animation-delay:${delay}` }, svg);
       svgEl("circle", { cx, cy, r: 6, fill: hollow ? cssVar("--page") : color, stroke: color, "stroke-width": 2, class: "pop", style: `animation-delay:${delay}` }, svg);
-      let ly = cy - 9;
-      while (placed.some((q) => Math.abs(q.x - cx) < 120 && Math.abs(q.y - ly) < 13)) ly += 14;
-      placed.push({ x: cx, y: ly });
-      const anchor = cx > W - 150 ? "end" : "start";
-      svgEl("text", { x: cx + (anchor === "end" ? -11 : 11), y: ly, "text-anchor": anchor, class: "ptlabel fade-in", style: `animation-delay:${delay}` }, svg,
-        p.key === "e3(greedy)" ? "E3 greedy (≡ P2 N=1)" : p.label.split(" · ")[0] + (p.key === "p2(D=120,N=4)" ? " N=4" : ""));
+      return { p, cx, cy, delay };
+    });
+
+    // Each label takes the first candidate spot that clears every dot, every placed label
+    // and the plot edges. Widths are estimated (11 px text, ~6.2 px a character) because
+    // the chart may be drawn while its tab is hidden, when getBBox() reports zero.
+    const boxes = dots.map(({ cx, cy }) => ({ x0: cx - 12, x1: cx + 12, y0: cy - 12, y1: cy + 12 }));
+    const hits = (b) => boxes.some((o) => b.x0 < o.x1 && b.x1 > o.x0 && b.y0 < o.y1 && b.y1 > o.y0);
+    const inside = (b) => b.x0 >= L + 2 && b.x1 <= W - R - 2 && b.y0 >= T && b.y1 <= H - B;
+    dots.forEach(({ p, cx, cy, delay }) => {
+      const text = p.key === "e3(greedy)" ? "E3 greedy (≡ P2 N=1)" : p.label.split(" · ")[0] + (p.key === "p2(D=120,N=4)" ? " N=4" : "");
+      const w = text.length * 6.2, h = 13;
+      // beside the dot first, then centred over or under it, then further away
+      const candidates = [
+        { side: "right", dy: -9 }, { side: "left", dy: -9 }, { side: "right", dy: 4 }, { side: "left", dy: 4 },
+        { side: "centre", dy: -16 }, { side: "centre", dy: 25 },
+      ];
+      for (const dy of [-22, 17, -35, 30, -48, 43]) {
+        for (const side of ["right", "left"]) candidates.push({ side, dy });
+      }
+      const box = ({ side, dy }) => {
+        const centred = Math.min(Math.max(cx - w / 2, L + 2), W - R - 2 - w);
+        const x0 = side === "right" ? cx + 14 : side === "left" ? cx - 14 - w : centred;
+        return { x0, x1: x0 + w, y0: cy + dy - h + 3, y1: cy + dy + 3 };
+      };
+      const spot = candidates.find((c) => { const b = box(c); return inside(b) && !hits(b); })
+        || candidates.find((c) => inside(box(c))) || candidates[0];
+      const b = box(spot);
+      boxes.push(b);
+      svgEl("text", { x: b.x0, y: cy + spot.dy, "text-anchor": "start", class: "ptlabel fade-in", style: `animation-delay:${delay}` }, svg, text);
     });
   },
 
