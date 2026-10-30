@@ -119,7 +119,7 @@ const Run = {
       if (cat.state === "ready") {
         this.fillSelects(cat);
         $("#run-load").disabled = false;
-        setStatus(status, "Pick a policy and a test day, then Load.");
+        setStatus(status, cat.message || "Pick a policy and a test day, then Load.");
         return;
       }
       if (cat.state === "error") { setStatus(status, `Cannot load the dataset — ${cat.message}`, true); return; }

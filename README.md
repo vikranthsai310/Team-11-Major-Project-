@@ -84,7 +84,11 @@ python scripts/run_batcher.py --policy p2      # shadow mode on preprod: decides
 pytest tests/                                  # full suite
 ```
 
-The Simulator view replays the test days and needs `data/processed/d1_blocks_*.parquet` (gitignored). It uses the trained forecaster in `experiments/phase3-forecaster/models/` (also gitignored) and falls back to the moving average without it; rebuild it with `python scripts/train_forecaster.py --data data/processed/d1_blocks_20260613_20260913.parquet`, which reproduces the committed scores exactly. The Live view needs `BLOCKFROST_PROJECT_ID` in `.env`. `run_batcher.py` also needs `batcher.skey` in `BATCHER_KEY_DIR`, which must be the key the DEX was deployed with.
+The Simulator view replays the test days and needs `data/processed/d1_blocks_*.parquet` (gitignored). It uses the trained forecaster in `experiments/phase3-forecaster/models/` (also gitignored) and falls back to the moving average without it; rebuild it with `python scripts/train_forecaster.py --data data/processed/d1_blocks_20260613_20260913.parquet`, which reproduces the committed scores exactly. The Live view needs `BLOCKFROST_PROJECT_ID` in `.env`.
+
+A read-only copy can be hosted on Vercel: `python scripts/export_site.py` writes `site/` (the same frontend over precomputed results and 10 of the 100 test days, plus one function for the Live view), then `cd site && vercel deploy --prod`. Set `BLOCKFROST_PROJECT_ID` in the Vercel project's environment, never in the files. See `docs/17-UI-SPEC.md` §A1.
+
+`run_batcher.py` also needs `batcher.skey` in `BATCHER_KEY_DIR`, which must be the key the DEX was deployed with.
 
 ## Development
 

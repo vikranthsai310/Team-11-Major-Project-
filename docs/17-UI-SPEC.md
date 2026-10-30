@@ -30,6 +30,8 @@ Fills the two design gaps in the project: the optional dashboard (FR-15), which 
 | Modes | Replay a completed episode, or drive a live simulation |
 | Effort budget | ~1 day, at the end. First item in the scope-cut order (`12-ROADMAP.md`) |
 
+**Hosted copy (decided 2026-10-30).** The constraints above still hold for `scripts/dashboard.py`, which keeps refusing any bind but loopback. A separate read-only copy is published on Vercel by `scripts/export_site.py`: the same frontend over precomputed JSON (the test-split results, and 10 of the 100 test days for every policy and traffic level) plus one function, `api/live.py`, that reads the preprod deployment through Blockfrost. It holds no signing key and has no write path, and the Blockfrost project ID lives only in the Vercel environment. Edge caching (30 s) and refusing query strings keep a busy page from exhausting the free tier. What made exposure acceptable is that nothing in it can configure an experiment, sign or submit.
+
 **Explicit non-goal.** The dashboard never influences a result. It reads; it does not configure experiments. Anything reported comes from `scripts/evaluate.py`, never from this view.
 
 ## A2. Information architecture
