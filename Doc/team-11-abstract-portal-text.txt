@@ -1,0 +1,34 @@
+1. Background and Problem
+Cardano uses the extended UTXO (eUTXO) model [1]. A decentralized exchange (DEX) keeps each pool in one output that every swap must spend, and an output can be spent only once, so just one transaction per block can use a pool. Off-chain batchers therefore settle many swaps together [2], [3], but today they fire every M orders or T seconds, blind to the chain and queue. A sent batch locks the pool until it confirms, so a badly timed one delays everyone behind it. Fees follow a fixed formula:
+    fee = 44s + 155,381 + 0.0577m + 0.0000721c,     C_user = fee(n) / n    (1)
+where s is size in bytes, m and c are memory and CPU-step units and n is the batch size. With no bidding, bad timing costs time, not money, so Ethereum fee-market work [4] does not carry over.
+
+2. Objective and Novelty
+Our aim was a batcher that decides at every block whether to send a batch and how large, cutting C_user and waiting time without breaking limits or starving any order. What is new: a 92-day measurement showing the bottleneck is the pool lock, not congestion; two hard capacity gates; a forecast-driven decision rule; a learning agent made safe by a runtime shield; and one-price clearing with batch chaining, tested on the Cardano testnet.
+
+3. Methodology
+Step 1: Collect and check the data. We downloaded 388,781 mainnet blocks (92 days) and split them 70/15/15 in date order. The median block was only 3.0% full and just 0.56% passed 80%, far below the often-quoted 80–90%.
+Step 2: Predict block fill. For each block t we build a feature vector x_t from the fill, execution units and transaction counts of the last 20 blocks plus the time of day. A LightGBM model [5] then predicts the fill of the next three blocks:
+    f̂_(t+h) = g_LGBM(x_t),     h = 1, 2, 3    (2)
+Step 3: Apply the capacity gates. Gate A applies the per-transaction limits; Gate B, the room predicted in the next block:
+    n_A = max{n : s(n) ≤ 16,384, m(n) ≤ 14×10^6},     n_B = max{n : f̂_(t+1)·S_max + s(n) ≤ S_max}    (3)
+Step 4: Decide (policy P2). Let n* = min(n_A, n_B) and let w be the wait of the oldest order. If the pool is locked, the batcher waits. If w ≥ D_max = 120 s, it submits n_A at once. Otherwise, with N_min = 8:
+    a_t = WAIT  if  n* < N_min  and  min(f̂_(t+2), f̂_(t+3)) < f̂_(t+1);   SUBMIT(n*)  otherwise    (4)
+Step 5: Learn (P3) and shield. A masked deep Q-network [6] picks between WAIT and eight batch sizes, using the reward
+    r_t = −(w_C·Ĉ_t + w_L·L̂_t + w_S·Ŝ_t + w_K·K̂_t)    (5)
+where hatted terms are normalised cost, delay, slippage and pool-lock time. A runtime shield masks illegal actions, clamps every batch to Gate A and passes unfamiliar states to P2.
+Step 6: Clear fairly and test. Each direction clears at one price: with a lovelace and b tokens sold into a pool holding x and y, and g = 1 − fee rate, the pool trades only the net imbalance at
+    P = g(y + b) / (x + g·a)    (6)
+so no order gains from its place in the queue. A simulator replays the recorded blocks against static batchers tuned on validation data (M = 16, T = 20 s).
+
+4. Results
+The forecaster’s average error was 0.0458, against 0.0516 for a 20-block moving average, and it called 74.2% of changes in the right direction.
+Reading Table 1. Each row is one batching policy. The columns give the average wait, the 95th-percentile wait (the slowest 5% of orders) and the fee per user; lower is better in all three. Greedy is fastest but dearest, since it sends small batches every block. The size trigger is cheap but slow, because orders sit until 16 have gathered. P2 sits in between: 18.9% cheaper than greedy for 5.1 s more average wait, and both faster and 1.5% cheaper than the tuned interval batcher. The unshielded DQN is cheap but 59% slower than greedy.
+Without its shield, the learning agent let 35.7% of orders expire under heavy load; with it, none expired. Chaining two batches per decision point nearly halved the heavy-load 95th-percentile wait (245.5 s to 120.0 s) for 1.2% more cost.
+Reading Fig. 1. Each point is one policy: e1, e2 and e3 are the size, interval and greedy baselines, p2 and p3 our rule and DQN, oracle is P2 fed the true future fill, and null sends only when forced. Moving right costs more and moving up means longer waits, so lower-left is best. P2 sits below and left of e2, beating it on both counts; only greedy waits less, and it charges each user 23% more. The oracle almost overlaps P2, so a perfect forecast would save only about one second, as block space rarely runs out.
+
+5. Relevance to Applied AI for Sustainable Development
+Packing the same trading into fewer, fuller transactions cuts the fee each person pays, which helps small traders most, and on a low-energy proof-of-stake chain it also makes better use of every block. One price per batch also stops the batcher from reordering trades for profit.
+
+6. Limitations and Conclusion
+We used one 92-day window, one pool and generated order flow; chaining is not yet live, and the testnet batch held one order. Still, the bottleneck is the pool lock, not congestion, and a chain-aware batcher with hard gates and a shielded learner cuts user costs without risking orders.
